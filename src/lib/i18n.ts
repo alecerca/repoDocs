@@ -6,6 +6,7 @@ const DICT: Record<string, { en: string; es: string }> = {
   // search / filter
   'search.placeholder': { en: 'Search sections…', es: 'Buscar secciones…' },
   'filter.all': { en: 'All', es: 'Todos' },
+  'filter.click': { en: 'Click to filter', es: 'Clic para filtrar' },
   // views
   'view.board': { en: '⧉ Board', es: '⧉ Tablero' },
   'view.canvas': { en: '◧ Canvas', es: '◧ Canvas' },

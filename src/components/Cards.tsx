@@ -16,12 +16,19 @@ const STATUS_META: Record<StatusKey, { label: string; emoji: string }> = Object.
 ) as Record<StatusKey, { label: string; emoji: string }>
 
 export function StatusChip({ status }: { status: StatusKey | null }) {
+  const { statusFilter, setStatusFilter, t } = useApp()
   if (!status) return null
   const meta = STATUS_META[status]
+  const active = statusFilter === status
   return (
-    <span className={`chip chip-${status}`} title={meta.label}>
+    <button
+      type="button"
+      className={`chip chip-${status}${active ? ' on' : ''}`}
+      title={`${meta.label} · ${t('filter.click')}`}
+      onClick={() => setStatusFilter(active ? 'all' : status)}
+    >
       {meta.emoji} {meta.label}
-    </span>
+    </button>
   )
 }
 

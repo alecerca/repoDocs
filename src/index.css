@@ -744,6 +744,21 @@ button {
   color: var(--text2);
 }
 
+button.chip {
+  cursor: pointer;
+  font-family: inherit;
+  line-height: inherit;
+}
+
+button.chip:hover {
+  border-color: currentColor;
+  filter: brightness(1.15);
+}
+
+button.chip.on {
+  outline: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+}
+
 .chip-done {
   color: var(--done);
   border-color: color-mix(in srgb, var(--done) 32%, var(--border));
