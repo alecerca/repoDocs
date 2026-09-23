@@ -96,3 +96,116 @@ function rebuildSummaryText(section: { heading: string | null }, doc: Doc): stri
   const heading = section.heading ? `${section.heading}\n` : ''
   return `${heading}\n| ${cNum} | ${cTopic} | ${cStatus} |\n| --- | --- | --- |\n${rows}`
 }
+
+/**
+ * Parses raw markdown content into a structured Doc representation.
+ *
+ * @param project Project identifier
+ * @param file Relative file path inside the project
+ * @param raw Complete markdown source code
+ * @returns Structured Doc object
+ */
+export function parseMarkdownDoc(project: string, file: string, raw: string): Doc {
+  const lines = raw.split('\n')
+  let title = file
+  let subtitle = ''
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.startsWith('# ') && title === file) {
+      title = line.replace(/^#\s+/, '').trim()
+    } else if (line.startsWith('>') && !subtitle) {
+      subtitle = line.replace(/^>\s*/, '').trim()
+    }
+  }
+
+  let firstH2 = -1
+  const sections: Doc['sections'] = []
+  let current: { heading: string; start: number; level: number } | null = null
+
+  const flush = (heading: string, start: number, end: number, level: number) => {
+    const rawChunk = lines.slice(start, end + 1).join('\n')
+    const id = `${heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sec'}-${sections.length}`
+    let status: Doc['sections'][0]['status'] = null
+    const lower = rawChunk.toLowerCase()
+    if (lower.includes('✅') || lower.includes('done') || lower.includes('hecho')) {
+      status = 'done'
+    } else if (lower.includes('📌') || lower.includes('pending') || lower.includes('pendiente')) {
+      status = 'pending'
+    } else if (lower.includes('🔶') || lower.includes('progress') || lower.includes('progreso')) {
+      status = 'progress'
+    }
+    sections.push({
+      id,
+      heading,
+      level,
+      kind: 'section',
+      raw: rawChunk,
+      startLine: start + 1,
+      endLine: end + 1,
+      status,
+    })
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (/^##\s+/.test(line)) {
+      if (firstH2 === -1) firstH2 = i
+      if (current) flush(current.heading, current.start, i - 1, current.level)
+      current = { heading: line.replace(/^##\s+/, '').trim(), start: i, level: 2 }
+    }
+  }
+  if (current) flush(current.heading, current.start, lines.length - 1, current.level)
+
+  if (sections.length === 0 && raw.trim()) {
+    let fallbackStatus: Doc['sections'][0]['status'] = null
+    const lowerRaw = raw.toLowerCase()
+    if (lowerRaw.includes('✅') || lowerRaw.includes('done') || lowerRaw.includes('hecho')) {
+      fallbackStatus = 'done'
+    } else if (lowerRaw.includes('📌') || lowerRaw.includes('pending') || lowerRaw.includes('pendiente')) {
+      fallbackStatus = 'pending'
+    } else if (lowerRaw.includes('🔶') || lowerRaw.includes('progress') || lowerRaw.includes('progreso')) {
+      fallbackStatus = 'progress'
+    }
+    sections.push({
+      id: 'section-0',
+      heading: title,
+      level: 1,
+      kind: 'section',
+      raw: raw.trim(),
+      startLine: 1,
+      endLine: lines.length,
+      status: fallbackStatus,
+    })
+  }
+
+  const introEnd = firstH2 === -1 ? lines.length - 1 : firstH2 - 1
+  const intro = lines.slice(0, firstH2 === -1 ? lines.length : firstH2).join('\n').trim()
+
+  const statusCounts: Doc['statusCounts'] = { done: 0, pending: 0, progress: 0 }
+  for (const s of sections) {
+    if (s.status) statusCounts[s.status]++
+  }
+
+  let hashVal = 0x811c9dc5
+  for (let i = 0; i < raw.length; i++) {
+    hashVal ^= raw.charCodeAt(i)
+    hashVal = Math.imul(hashVal, 0x01000193)
+  }
+
+  return {
+    file,
+    path: `${project}/${file}`,
+    project,
+    title,
+    subtitle,
+    raw,
+    intro,
+    introEndLine: Math.max(0, introEnd),
+    sections,
+    summary: null,
+    statusCounts,
+    sha: (hashVal >>> 0).toString(16),
+    lines: lines.length,
+    bytes: raw.length,
+  }
+}

@@ -5,6 +5,7 @@ import { TopBar } from './components/TopBar'
 import { BoardView, CanvasView } from './components/Views'
 import { PhoneMock } from './components/PhoneMock'
 import { OnboardingTour } from './components/OnboardingTour'
+import { GitHubModal } from './components/GitHubModal'
 import { subscribeToast, type ToastMsg } from './lib/toast'
 
 function ToastHost() {
@@ -90,6 +91,7 @@ function Shell() {
       <ToastHost />
       <PhoneMock />
       <OnboardingTour />
+      <GitHubModal />
     </div>
   )
 }
