@@ -1,33 +1,37 @@
 {
   "projectsRoot": "./examples",
   "outputDir": "./src/generated",
+  "summary": {
+    "heading": "Status summary",
+    "headers": ["#", "Topic", "Status"]
+  },
   "status": [
     {
       "key": "done",
       "emoji": "✅",
-      "label": "Completada",
-      "plural": "Completadas",
-      "hint": "completad|listo|terminad|cerrad"
+      "label": "Done",
+      "plural": "Done",
+      "hint": "done|completad|listo|terminad|cerrad"
     },
     {
       "key": "pending",
       "emoji": "📌",
-      "label": "Pendiente",
-      "plural": "Pendientes",
-      "hint": "pendiente|por hacer|falta"
+      "label": "Pending",
+      "plural": "Pending",
+      "hint": "pending|pendiente|por hacer|falta"
     },
     {
       "key": "progress",
       "emoji": "🔶",
-      "label": "En progreso",
-      "plural": "En progreso",
-      "hint": "en progreso|en proceso|validad|trabajando"
+      "label": "In progress",
+      "plural": "In progress",
+      "hint": "in progress|en progreso|en proceso|validad|trabajando"
     }
   ],
   "brands": {
     "docsboard-demo": {
       "name": "DocsBoard Demo",
-      "tagline": "Proyecto de ejemplo",
+      "tagline": "Example project",
       "accent": "#7f8bb3",
       "accent2": "#9f7fb8",
       "darkBg": "#131315",
@@ -45,26 +49,26 @@
       "name": "Demo App",
       "screen": {
         "kind": "party",
-        "title": "🎉 Fiesta Demo",
-        "subtitle": "Elegí tu juego",
-        "players": ["Ana", "Beto", "Ceci"],
+        "title": "🎉 Party Demo",
+        "subtitle": "Pick a game",
+        "players": ["Ana", "Ben", "Ceci"],
         "games": [
           {
-            "name": "Verdad o Reto",
+            "name": "Truth or Dare",
             "icon": "🔥",
             "gradient": ["#6f9cb3", "#7d84a8"],
-            "desc": "Elegí tu carta"
+            "desc": "Pick a card"
           },
           {
-            "name": "Tarjetas",
+            "name": "Cards",
             "icon": "🃏",
             "gradient": ["#9f7fb8", "#7f8bb3"],
-            "desc": "Pasá la carta por turnos"
+            "desc": "Pass the card around"
           }
         ],
         "sample": {
-          "label": "🃏 Carta de ejemplo",
-          "text": "Nunca he fingido que conocía una película para no quedar mal."
+          "label": "🃏 Sample card",
+          "text": "I have never pretended to know a movie, show or song to blend in."
         }
       }
     }

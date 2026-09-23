@@ -270,9 +270,9 @@ export function SummaryCard({ doc }: { doc: Doc }) {
 
 function detectEntryStatus(estado: string): StatusKey | null {
   const e = estado.toLowerCase()
-  if (/completad/.test(e)) return 'done'
-  if (/progreso|proceso/.test(e)) return 'progress'
-  if (/pendiente/.test(e)) return 'pending'
+  if (/completad|done|listo|terminad|cerrad/.test(e)) return 'done'
+  if (/progreso|proceso|in progress|progress/.test(e)) return 'progress'
+  if (/pendiente|pending/.test(e)) return 'pending'
   return null
 }
 

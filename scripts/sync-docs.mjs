@@ -90,8 +90,8 @@ function findSummaryTable(lines) {
       .split('|')
       .map(normalizeCell)
     const hasNum = headerCells.some((c) => /^#?$/i.test(c) || /num/.test(c) || /^\s*$/.test(c))
-    const hasTema = headerCells.some((c) => /tema/.test(c))
-    const hasEstado = headerCells.some((c) => /estado/.test(c))
+    const hasTema = headerCells.some((c) => /tema|topic/.test(c))
+    const hasEstado = headerCells.some((c) => /estado|status/.test(c))
     if (!(hasTema && hasEstado)) continue
     let end = i
     while (end + 1 < lines.length && lines[end + 1].trim().startsWith('|')) end++
@@ -166,7 +166,7 @@ function parseDoc(filePath, projectName) {
       if (s.raw.includes(summaryRaw)) {
         s.kind = 'summary'
         s.raw = s.raw.replace(summaryRaw, '').replace(/\n{3,}/g, '\n\n').trim()
-        if (!s.heading) s.heading = 'Resumen de estado'
+        if (!s.heading) s.heading = cfg.summary.heading
       }
     }
   }
@@ -266,6 +266,8 @@ function writeAppConfig() {
     `export const BRANDS: Record<string, Brand> = ${JSON.stringify(cfg.brands ?? {}, null, 2)}\n\n` +
     `export interface AppPreview {\n  forProject?: string\n  name: string\n  screen: Record<string, unknown>\n}\n` +
     `export const APPS: AppPreview[] = ${JSON.stringify(cfg.apps ?? [], null, 2)}\n\n` +
+    `export interface SummaryConfig {\n  heading: string\n  headers: string[]\n}\n` +
+    `export const SUMMARY: SummaryConfig = ${JSON.stringify(cfg.summary, null, 2)}\n\n` +
     `export const PROJECTS_ROOT = ${JSON.stringify(cfg.projectsRoot)}\n`
   writeFileSync(APPCONFIG_FILE, code, 'utf8')
 }

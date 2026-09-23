@@ -1,37 +1,40 @@
-# Recomendaciones · proyecto de ejemplo
+# Recommendations · example project
 
-> Documento vivo de ejemplo con estados: ✅ Completada · 📌 Pendiente · 🔶 En progreso
-
----
-
-## Resumen de estado
-
-| # | Tema | Estado |
-|---|------|--------|
-| 1 | Refactor del generador de docs | 🔶 En progreso |
-| 2 | Export byte-idéntico sin ediciones | ✅ Completada |
-| 3 | Smoke test E2E automático | ✅ Completada |
+> Live example document with statuses: ✅ Done · 📌 Pending · 🔶 In progress
 
 ---
 
-## A. Calidad
+## Status summary
 
-### 1. Refactor del generador de docs — 🔶 En progreso
-
-**Contexto:** `sync-docs.mjs` crecía con lógica de negocio hardcodeada.
-
-**Propuesta:** mover root, emojis de estado y marcas a `mdboard.json` y generar `src/generated/appconfig.ts` para el front-end.
-
----
-
-## B. Fidelidad del export — ✅ Completada
-
-Sin ediciones, el markdown exportado debe ser byte-idéntico al archivo original. Se eliminaron los `trimEnd()` del generador y la normalización de saltos de línea en `assembleRaw`.
+| # | Topic | Status |
+|---|-------|--------|
+| 1 | Refactor the docs generator | 🔶 In progress |
+| 2 | Byte-identical export without edits | ✅ Done |
+| 3 | Automated E2E smoke test | ✅ Done |
 
 ---
 
-## C. Verificación — ✅ Completada
+## A. Quality
 
-`scripts/smoke.mjs` (Playwright) cubre navegación, edición, export con tabla resumen, reset y preview de app. Corre sin errores de consola.
+### 1. Refactor the docs generator — 🔶 In progress
+
+**Context:** `sync-docs.mjs` was growing with hardcoded business logic.
+
+**Proposal:** move root, status emojis and brands to `mdboard.json` and generate
+`src/generated/appconfig.ts` for the frontend.
+
+---
+
+## B. Export fidelity — ✅ Done
+
+Without edits, the exported markdown must be byte-identical to the original file. The `trimEnd()`
+calls in the generator and the line-ending normalization in `assembleRaw` were removed.
+
+---
+
+## C. Verification — ✅ Done
+
+`scripts/smoke.mjs` (Playwright) covers navigation, editing, export with the summary table, reset
+and the app preview. It runs without console errors.
 
 ---

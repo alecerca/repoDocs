@@ -1,35 +1,38 @@
-# DocsBoard — proyecto de ejemplo
+# DocsBoard — example project
 
-> Esto es un `AGENTS.md` de demostración: muestra cómo DocsBoard agrupa por secciones, chips de estado y tabla resumen.
-
----
-
-## Resumen de estado
-
-| # | Tema | Estado |
-|---|------|--------|
-| 1 | Configurar DocsBoard con tu repo | 📌 Pendiente |
-| 2 | Definir paleta y preview de app | ✅ Completada |
-| 3 | Escribir ediciones a los .md reales | ✅ Completada |
+> This is a demo `AGENTS.md`: it shows how DocsBoard groups content into sections, status chips
+> and a summary table.
 
 ---
 
-## A. Primeros pasos — ✅ Completada
+## Status summary
 
-Copia `mdboard.json` a la raíz de DocsBoard y ajustá `projectsRoot` para que apunte a la carpeta que contiene tus proyectos (cada uno con su `AGENTS.md` / `RECOMENDACIONES.md`).
-
-### 1. Configuración — 📌 Pendiente
-
-**Contexto:** los proyectos se detectan automáticamente al correr `npm run dev`.
-
-**Propuesta:**
-- Poné `projectsRoot` en tu `mdboard.local.json` (no se commitea).
-- Ajustá `status` si tus docs usan otros emojis de estado (por defecto `✅` completada, `📌` pendiente, `🔶` en progreso).
+| # | Topic | Status |
+|---|-------|--------|
+| 1 | Configure DocsBoard with your repo | 📌 Pending |
+| 2 | Define palette and app preview | ✅ Done |
+| 3 | Write edits back to the real .md files | ✅ Done |
 
 ---
 
-## B. Personalización — ✅ Completada
+## A. First steps — ✅ Done
 
-Las marcas (`brands`) y previews de app (`apps`) viven en la config; el board no tiene hardcodeado ninguno de tus proyectos.
+Copy `mdboard.json` to the DocsBoard root and point `projectsRoot` at the folder containing your
+projects (each with its `AGENTS.md` / `RECOMENDACIONES.md`).
+
+### 1. Configuration — 📌 Pending
+
+**Context:** projects are detected automatically when you run `npm run dev`.
+
+**Proposal:**
+- Put `projectsRoot` in your `mdboard.local.json` (it is not committed).
+- Tune `status` if your docs use other status emojis (defaults: `✅` done, `📌` pending, `🔶` in progress).
+
+---
+
+## B. Customization — ✅ Done
+
+Brands (`brands`) and app previews (`apps`) live in the config; the board has none of your projects
+hardcoded.
 
 ---

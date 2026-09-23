@@ -1,5 +1,6 @@
 import type { Doc } from '../generated/docs'
 import { DOCS } from '../generated/docs'
+import { SUMMARY } from './config'
 
 export type { Doc, DocSection, DocStatus, DocSummaryEntry } from '../generated/docs'
 
@@ -91,6 +92,7 @@ function rebuildSummaryText(section: { heading: string | null }, doc: Doc): stri
     .filter((e) => e.num !== '#')
     .map((e) => `| ${e.num} | ${e.tema} | ${e.estado} |`)
     .join('\n')
+  const [cNum, cTopic, cStatus] = SUMMARY.headers
   const heading = section.heading ? `${section.heading}\n` : ''
-  return `${heading}\n| # | Tema | Estado |\n| --- | --- | --- |\n${rows}`
+  return `${heading}\n| ${cNum} | ${cTopic} | ${cStatus} |\n| --- | --- | --- |\n${rows}`
 }

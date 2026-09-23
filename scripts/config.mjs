@@ -46,6 +46,8 @@ export function loadConfig() {
   const status = Array.isArray(merged.status) ? merged.status : []
   const brands = merged.brands ?? {}
   const apps = Array.isArray(merged.apps) ? merged.apps : []
+  const websites = Array.isArray(merged.websites) ? merged.websites : []
+  const summary = { heading: 'Resumen de estado', headers: ['#', 'Tema', 'Estado'], ...(merged.summary ?? {}) }
 
   return {
     ...merged,
@@ -56,6 +58,8 @@ export function loadConfig() {
     status,
     brands,
     apps,
+    websites,
+    summary,
     pkgRoot: PKG_ROOT,
   }
 }
