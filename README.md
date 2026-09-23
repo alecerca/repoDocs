@@ -18,7 +18,8 @@ reading them inside the repo you're coding in is a poor experience. repoDocs rea
 with `.md` files, turns modern documents into cards on a board (or a canvas), and lets you:
 
 - **Read** long docs as separate, collapsible sections.
-- **Search** and **filter by status** (✅ done · 📌 pending · 🔶 in progress, configurable per project).
+- **Search** and **filter by status** (✅ done · 📌 pending · 🔶 in progress — labels configurable
+  globally, per project, per document, or in a document's frontmatter).
 - **Edit** any section in place with live Markdown preview and a **formatting toolbar** (no Markdown
   knowledge required).
 - **Export / write back** the full Markdown to the original `.md` files.
@@ -49,7 +50,10 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
     { "key": "progress", "emoji": "🔶", "label": "En progreso", "plural": "En progreso", "hint": "en progreso|validad" }
   ],
   "brands": {
-    "my-projects-folder": { "accent": "#7c5df8", "palette": ["#7c5df8", "#f59e0b"], "stack": ["React Native", "Expo"] }
+    "my-projects-folder": { "accent": "#7c5df8", "palette": ["#7c5df8", "#f59e0b"], "stack": ["React Native", "Expo"],
+      "status": { "progress": { "label": "En desarrollo", "plural": "En desarrollo" } }, // per-project label override
+      "docs": { "AGENTS.md": { "status": { "pending": { "label": "Backlog", "plural": "Backlog" } } } } // per-document override
+    }
   },
   "apps": [ // optional: phone-style previews; empty = hide the 📱 button
     { "forProject": "my-projects-folder", "name": "My App", "screen": { "kind": "party", "title": "🍾 My App" } }
@@ -61,6 +65,10 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
   ]
 }
 ```
+
+Status labels cascade per document: global `status[]` → `brands.<project>.status` →
+`brands.<project>.docs.<file>.status` → frontmatter. The final labels are emitted per document and
+shown on the chips (e.g. *Shipped* instead of *Done*).
 
 `mdboard.json` holds the public defaults (commit it). Put everything local/private in
 `mdboard.local.json` (already gitignored).
@@ -83,6 +91,7 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
 | `npm run build`    | `tsc -b && vite build` (runs sync first)                           |
 | `npm run lint`     | oxlint                                                             |
 | `npm run smoke`    | E2E smoke test (spawns its own preview on :5199, writes disabled)  |
+| `npm test`         | Status-override & config unit tests (`test/status-overrides.test.mjs`) |
 
 ## How it works
 
