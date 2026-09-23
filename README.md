@@ -5,6 +5,12 @@ filter by status, edit every section, and write changes straight back to the rea
 
 ![repoDocs screenshot](assets/screenshot.png)
 
+## Preview
+
+| Canvas view | Mobile app preview | Web app preview |
+| ----------- | ------------------ | --------------- |
+| ![Canvas view](assets/canvas.png) | ![Mobile app preview](assets/mobile.png) | ![Web app preview](assets/web.png) |
+
 ## Why
 
 `AGENTS.md` / `README.md` files are the single source of truth for a project, but
