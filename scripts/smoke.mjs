@@ -100,6 +100,9 @@ console.log('tras reset, cards editadas:', await page.locator('.card.edited').co
 await page.getByRole('button', { name: /App/ }).click()
 await page.waitForTimeout(400)
 console.log('phone preview visible:', (await page.locator('.phone-frame').count()) === 1)
+await page.getByRole('button', { name: '🌐 Web' }).click()
+await page.waitForTimeout(400)
+console.log('web preview visible:', (await page.locator('.browser-frame').count()) === 1)
 await page.getByRole('button', { name: '✕ Close preview' }).click()
 
 // búsqueda

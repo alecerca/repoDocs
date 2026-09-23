@@ -266,6 +266,8 @@ function writeAppConfig() {
     `export const BRANDS: Record<string, Brand> = ${JSON.stringify(cfg.brands ?? {}, null, 2)}\n\n` +
     `export interface AppPreview {\n  forProject?: string\n  name: string\n  screen: Record<string, unknown>\n}\n` +
     `export const APPS: AppPreview[] = ${JSON.stringify(cfg.apps ?? [], null, 2)}\n\n` +
+    `export interface WebPreview {\n  forProject?: string\n  name: string\n  url?: string\n  title?: string\n  screen: Record<string, unknown>\n}\n` +
+    `export const WEBSITES: WebPreview[] = ${JSON.stringify(cfg.websites ?? [], null, 2)}\n\n` +
     `export interface SummaryConfig {\n  heading: string\n  headers: string[]\n}\n` +
     `export const SUMMARY: SummaryConfig = ${JSON.stringify(cfg.summary, null, 2)}\n\n` +
     `export const PROJECTS_ROOT = ${JSON.stringify(cfg.projectsRoot)}\n`

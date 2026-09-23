@@ -27,7 +27,8 @@ const DICT: Record<string, { en: string; es: string }> = {
     es: '¿Descartar todas tus ediciones locales y volver a los .md originales?',
   },
   'top.app': { en: 'App', es: 'App' },
-  'top.app.title': { en: 'App-style preview', es: 'Preview estilo app' },
+  'top.app.title': { en: 'App & web previews', es: 'Preview de app y web' },
+  'preview.web': { en: 'Web', es: 'Web' },
   'top.theme.title': { en: 'Toggle theme', es: 'Cambiar tema' },
   // toasts
   'toast.downloaded': { en: 'Markdown file downloaded ⬇️', es: 'Archivo .md descargado ⬇️' },

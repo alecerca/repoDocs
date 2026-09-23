@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { useApp } from '../state/AppContext'
 import { brandFor } from '../lib/palette'
-import { APPS } from '../lib/config'
+import { APPS, WEBSITES } from '../lib/config'
 
 type Game = { name: string; icon: string; gradient: string[]; desc: string }
 type Sample = { label: string; text: string }
@@ -16,6 +17,12 @@ type Screen = {
   pro?: string
   proBadge?: string
   button?: string
+  nav?: string[]
+  hero?: string
+  sub?: string
+  points?: string[]
+  cta?: string
+  cta2?: string
 }
 
 export function findApp(project: string): { name: string; screen: Screen } | null {
@@ -24,34 +31,75 @@ export function findApp(project: string): { name: string; screen: Screen } | nul
   return { name: hit.name, screen: hit.screen as unknown as Screen }
 }
 
+export function findWeb(project: string): { name: string; url?: string; title?: string; screen: Screen } | null {
+  const hit = WEBSITES.find((w) => !w.forProject || w.forProject === project)
+  if (!hit) return null
+  return { name: hit.name, url: hit.url, title: hit.title, screen: hit.screen as unknown as Screen }
+}
+
+type Mode = 'app' | 'web'
+
 export function PhoneMock() {
   const { previewOpen, setPreviewOpen, activeProject, t } = useApp()
   const brand = brandFor(activeProject)
   const app = findApp(activeProject)
+  const web = findWeb(activeProject)
+  const [mode, setMode] = useState<Mode>('app')
+  const effectiveMode = (mode === 'web' && !web) || (mode === 'app' && !app) ? (app ? 'app' : 'web') : mode
 
   if (!previewOpen) return null
 
   return (
     <div className="mock-overlay" onClick={() => setPreviewOpen(false)}>
       <div className="mock-stage" onClick={(e) => e.stopPropagation()}>
-        <div className="phone-frame">
-          <div className="phone-notch" />
-          {app ? (
-            app.screen.kind === 'party' ? (
-              <PartyMock screen={app.screen as Screen & { players: string[]; games: Game[]; sample: Sample }} />
-            ) : (
-              <ImpostorMock screen={app.screen as Screen & { players: string[]; categories: string[] }} />
-            )
-          ) : (
+        {app || web ? (
+          effectiveMode === 'web' && web ? (
+            <WebFrame
+              project={activeProject}
+              web={web}
+              title={web.title ?? web.screen.title ?? brand.name}
+            />
+          ) : app ? (
+            <div className="phone-frame">
+              <div className="phone-notch" />
+              {app.screen.kind === 'party' ? (
+                <PartyMock screen={app.screen as Screen & { players: string[]; games: Game[]; sample: Sample }} />
+              ) : (
+                <ImpostorMock screen={app.screen as Screen & { players: string[]; categories: string[] }} />
+              )}
+            </div>
+          ) : null
+        ) : (
+          <div className="phone-frame">
+            <div className="phone-notch" />
             <div className="phone-screen empty">
               <p>{t('mock.empty', { project: activeProject || t('inspector.section') })}</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
         <div className="mock-side">
           <h2>
-            {t('mock.side.title')} <em style={{ color: brand.accent }}>{app?.name ?? brand.name}</em>
+            {t('mock.side.title')} <em style={{ color: brand.accent }}>{web?.name ?? app?.name ?? brand.name}</em>
           </h2>
+          <div className="mock-tabs" role="group" aria-label="Preview mode">
+            <button
+              type="button"
+              className={effectiveMode === 'app' ? 'on' : ''}
+              onClick={() => setMode('app')}
+              disabled={!app}
+            >
+              📱 {t('top.app')}
+            </button>
+            <button
+              type="button"
+              className={effectiveMode === 'web' ? 'on' : ''}
+              onClick={() => setMode('web')}
+              disabled={!web}
+            >
+              🌐 {t('preview.web')}
+            </button>
+          </div>
           <p>{t('mock.side.desc')}</p>
           <div className="swatch-row big">
             {brand.palette.map((c) => (
@@ -62,6 +110,66 @@ export function PhoneMock() {
             {t('mock.close')}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function renderPhoneScreen(screen: Screen) {
+  if (screen.kind === 'party')
+    return <PartyMock screen={screen as Screen & { players: string[]; games: Game[]; sample: Sample }} />
+  return <ImpostorMock screen={screen as Screen & { players: string[]; categories: string[] }} />
+}
+
+function WebFrame({ project, web, title }: { project: string; web: { url?: string; screen: Screen }; title: string }) {
+  return (
+    <div className="browser-frame">
+      <div className="browser-bar">
+        <span className="browser-dots">
+          <i className="close" />
+          <i className="min" />
+          <i className="max" />
+        </span>
+        <span className="browser-url">
+          <span className="browser-scheme">https</span>://{web.url ?? `${project}.example.com`}
+        </span>
+      </div>
+      <div className="browser-body">
+        {web.screen.kind === 'landing' ? (
+          <LandingMock screen={web.screen} title={title} />
+        ) : (
+          renderPhoneScreen(web.screen)
+        )}
+      </div>
+    </div>
+  )
+}
+
+function LandingMock({ screen, title }: { screen: Screen; title: string }) {
+  return (
+    <div className="landing">
+      <nav className="landing-nav">
+        <strong>{screen.title ?? title}</strong>
+        {screen.nav?.map((n) => (
+          <a key={n}>{n}</a>
+        ))}
+      </nav>
+      <div className="landing-hero">
+        <h2>{screen.hero}</h2>
+        {screen.sub && <p>{screen.sub}</p>}
+        <div className="landing-ctas">
+          {screen.cta && <button className="btn primary sm">{screen.cta}</button>}
+          {screen.cta2 && <button className="btn ghost sm">{screen.cta2}</button>}
+        </div>
+        {screen.points && (
+          <div className="landing-points">
+            {screen.points.map((p) => (
+              <span className="landing-point" key={p}>
+                ✓ {p}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

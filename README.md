@@ -15,7 +15,7 @@ with `.md` files, turns modern documents into cards on a board (or a canvas), an
 - **Search** and **filter by status** (✅ done · 📌 pending · 🔶 in progress, configurable per project).
 - **Edit** any section in place with live Markdown preview.
 - **Export / write back** the full Markdown to the original `.md` files.
-- **Preview** a phone-style mock of your app (config-driven, optional).
+- **Preview** a phone-style mock **and/or a desktop web mock** of your project (config-driven, optional).
 
 ## Quick start
 
@@ -43,6 +43,11 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
   },
   "apps": [ // optional: phone-style previews; empty = hide the 📱 button
     { "forProject": "my-projects-folder", "name": "My App", "screen": { "kind": "party", "title": "🍾 My App" } }
+  ],
+  "websites": [ // optional: desktop web-style previews (shown next to the app mock)
+    { "forProject": "my-projects-folder", "name": "My Site", "url": "mysite.example.com",
+      "screen": { "kind": "landing", "nav": ["Features", "Docs"], "hero": "My site hero",
+                  "cta": "Get started", "points": ["One", "Two"] } }
   ]
 }
 ```

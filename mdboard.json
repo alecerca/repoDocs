@@ -72,5 +72,22 @@
         }
       }
     }
+  ],
+  "websites": [
+    {
+      "forProject": "docsboard-demo",
+      "name": "DocsBoard Site",
+      "url": "docsboard.example.com",
+      "title": "DocsBoard",
+      "screen": {
+        "kind": "landing",
+        "nav": ["Features", "Docs", "Sponsor"],
+        "hero": "Turn your repo's Markdown into an editable board",
+        "sub": "One tool to read, search, filter and write your AGENTS.md / README files back.",
+        "cta": "Get started",
+        "cta2": "Live demo",
+        "points": ["Figma-like canvas", "Write-back to .md", "Config-driven · EN/ES"]
+      }
+    }
   ]
 }
