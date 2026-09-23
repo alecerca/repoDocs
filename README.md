@@ -7,7 +7,7 @@ filter by status, edit every section, and write changes straight back to the rea
 
 ## Why
 
-`AGENTS.md` / `RECOMENDACIONES.md` files are the single source of truth for a project, but
+`AGENTS.md` / `README.md` files are the single source of truth for a project, but
 reading them inside the repo you're coding in is a poor experience. repoDocs reads any folder
 with `.md` files, turns modern documents into cards on a board (or a canvas), and lets you:
 
