@@ -1,7 +1,7 @@
 import { useApp } from '../state/AppContext'
 import { assembleRaw } from '../lib/registry'
 import { typeDocFile, DOC_TYPE_ICON } from '../lib/registry'
-import { STATUS_META, APPS } from '../lib/config'
+import { STATUS_META, statusMetaForDoc, APPS, type StatusMeta } from '../lib/config'
 import { toast } from '../lib/toast'
 import type { DocStatus } from '../generated/docs'
 
@@ -35,7 +35,8 @@ export function TopBar() {
     t,
   } = useApp()
 
-  const totalStatus = statusCounts.done + statusCounts.pending + statusCounts.progress
+  const docStatuses = statusMetaForDoc(current)
+  const totalStatus = Object.values(statusCounts).reduce((a, b) => a + (b || 0), 0)
 
   const exportDoc = () => {
     if (!current) return
@@ -87,9 +88,16 @@ export function TopBar() {
             >
               {t('filter.all')}
             </button>
-            <FilterChip status="done" count={statusCounts.done} current={statusFilter} set={setStatusFilter} />
-            <FilterChip status="pending" count={statusCounts.pending} current={statusFilter} set={setStatusFilter} />
-            <FilterChip status="progress" count={statusCounts.progress} current={statusFilter} set={setStatusFilter} />
+            {docStatuses.map((meta) => (
+              <FilterChip
+                key={meta.key}
+                status={meta.key}
+                count={statusCounts[meta.key] ?? 0}
+                current={statusFilter}
+                set={setStatusFilter}
+                meta={meta}
+              />
+            ))}
           </div>
         )}
 
@@ -203,22 +211,24 @@ function FilterChip({
   count,
   current,
   set,
+  meta,
 }: {
   status: DocStatus
   count: number
   current: string | 'all' | DocStatus
   set: (s: 'all' | DocStatus) => void
+  meta?: StatusMeta
 }) {
-  const meta = STATUS_META.find((s) => s.key === status)
+  const m = meta ?? STATUS_META.find((s) => s.key === status)
   return (
     <button
       type="button"
       className={`fchip chip-${status}${current === status ? ' on' : ''}`}
       onClick={() => set(current === status ? 'all' : status)}
       disabled={count === 0}
-      title={meta?.plural ?? status}
+      title={m?.plural ?? status}
     >
-      {meta?.emoji ?? status} {count}
+      {m?.emoji ?? status} {count}
     </button>
   )
 }

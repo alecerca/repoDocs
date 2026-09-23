@@ -3,7 +3,7 @@ import type { Doc, DocSection } from '../lib/registry'
 import { sectionKey, INTRO_MARK, type EditsMap } from '../lib/registry'
 import { renderMarkdown, type StatusKey } from '../lib/markdown'
 import { brandFor } from '../lib/palette'
-import { STATUS_META as STATUS_CONFIG } from '../lib/config'
+import { statusByKey, type StatusMeta } from '../lib/config'
 import { toast } from '../lib/toast'
 import { useApp } from '../state/AppContext'
 
@@ -11,14 +11,21 @@ export function cleanHeading(h: string): string {
   return h.replace(/[*`[\]()]/g, '').trim()
 }
 
-const STATUS_META: Record<StatusKey, { label: string; emoji: string }> = Object.fromEntries(
-  STATUS_CONFIG.map((s) => [s.key, { label: s.label, emoji: s.emoji }])
-) as Record<StatusKey, { label: string; emoji: string }>
-
-export function StatusChip({ status }: { status: StatusKey | null }) {
-  const { statusFilter, setStatusFilter, t } = useApp()
+export function StatusChip({
+  status,
+  statusMeta,
+}: {
+  status: StatusKey | null
+  statusMeta?: StatusMeta[]
+}) {
+  const { statusFilter, setStatusFilter, current, t } = useApp()
   if (!status) return null
-  const meta = STATUS_META[status]
+  const meta = statusByKey(status, statusMeta ?? current?.statusMeta) ?? {
+    key: status,
+    label: status,
+    emoji: '•',
+    plural: status,
+  }
   const active = statusFilter === status
   return (
     <button
