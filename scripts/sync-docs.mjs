@@ -12,7 +12,7 @@
  * a mano con `npm run sync` para refrescar tras tocar un .md.
  */
 import { readdirSync, readFileSync, writeFileSync, statSync, mkdirSync } from 'node:fs'
-import { join, basename, extname } from 'node:path'
+import { join, basename, extname, relative } from 'node:path'
 import { loadConfig } from './config.mjs'
 
 const cfg = loadConfig()
@@ -176,8 +176,10 @@ function parseDoc(filePath, projectName) {
     if (s.status) statusCounts[s.status]++
   }
 
+  const projectDir = join(PROYECTOS_DIR, projectName)
+  const relFile = relative(projectDir, filePath).replace(/\\/g, '/')
   return {
-    file: basename(filePath),
+    file: relFile || basename(filePath),
     path: filePath,
     project: projectName,
     title,
@@ -203,6 +205,29 @@ function hash(str) {
   return (h >>> 0).toString(16)
 }
 
+function findMdFiles(dir) {
+  const result = []
+  function walk(currentDir) {
+    let entries = []
+    try {
+      entries = readdirSync(currentDir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      if (SKIP.has(entry.name) || entry.name.startsWith('.')) continue
+      const full = join(currentDir, entry.name)
+      if (entry.isDirectory()) {
+        walk(full)
+      } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.md') {
+        result.push(full)
+      }
+    }
+  }
+  walk(dir)
+  return result
+}
+
 function collect() {
   const projects = readdirSync(PROYECTOS_DIR)
     .filter((name) => {
@@ -212,20 +237,15 @@ function collect() {
     })
     .map((name) => {
       const dir = join(PROYECTOS_DIR, name)
-      let mds = []
-      try {
-        mds = readdirSync(dir).filter((f) => extname(f).toLowerCase() === '.md')
-      } catch {
-        mds = []
-      }
+      const mds = findMdFiles(dir)
       return { name, dir, mds }
     })
     .filter((p) => p.mds.length > 0)
 
   const docs = []
   for (const p of projects) {
-    for (const md of p.mds) {
-      docs.push(parseDoc(join(p.dir, md), p.name))
+    for (const fullPath of p.mds) {
+      docs.push(parseDoc(fullPath, p.name))
     }
   }
   docs.sort((a, b) => a.project.localeCompare(b.project) || a.file.localeCompare(b.file))

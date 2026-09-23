@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "npx tsx --test test/github.test.mjs",
     "smoke": "node scripts/run-smoke.mjs",
     "preview": "vite preview"
   },
