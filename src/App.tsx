@@ -19,12 +19,13 @@ function ToastHost() {
 }
 
 function Shell() {
-  const { view, fontScale, theme } = useApp()
+  const { view, fontScale, theme, lang } = useApp()
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${Math.round(16 * (fontScale / 100))}px`
     document.documentElement.dataset.theme = theme
-  }, [fontScale, theme])
+    document.documentElement.lang = lang
+  }, [fontScale, theme, lang])
 
   return (
     <div className="app">

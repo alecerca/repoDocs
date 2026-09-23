@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Summary table** detection + regeneration on export (`kind: 'summary'` sections are
   auto-maintained instead of edited).
 - **Search** across sections and **status filters** (`all | done | pending | progress`).
+- **i18n** (EN/ES) with a language toggle in the topbar; **English is the default**.
 - **Code highlighting** via highlight.js with a copy button.
 - **Export / Copy** the full reconstructed Markdown (byte-identical when nothing is edited).
 - Demo docs in `examples/` — the repo works out of the box.

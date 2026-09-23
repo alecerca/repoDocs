@@ -25,7 +25,7 @@ export function findApp(project: string): { name: string; screen: Screen } | nul
 }
 
 export function PhoneMock() {
-  const { previewOpen, setPreviewOpen, activeProject } = useApp()
+  const { previewOpen, setPreviewOpen, activeProject, t } = useApp()
   const brand = brandFor(activeProject)
   const app = findApp(activeProject)
 
@@ -44,25 +44,22 @@ export function PhoneMock() {
             )
           ) : (
             <div className="phone-screen empty">
-              <p>Sin preview para {activeProject || 'este proyecto'}. Definilo en apps → mdboard config.</p>
+              <p>{t('mock.empty', { project: activeProject || t('inspector.section') })}</p>
             </div>
           )}
         </div>
         <div className="mock-side">
           <h2>
-            Preview estilo app · <em style={{ color: brand.accent }}>{app?.name ?? brand.name}</em>
+            {t('mock.side.title')} <em style={{ color: brand.accent }}>{app?.name ?? brand.name}</em>
           </h2>
-          <p>
-            Preview configurable de apariencia app por proyecto (dato configurado en{' '}
-            <code>mdboard.json</code> / <code>mdboard.local.json</code>).
-          </p>
+          <p>{t('mock.side.desc')}</p>
           <div className="swatch-row big">
             {brand.palette.map((c) => (
               <span key={c} className="swatch" style={{ background: c }} title={c} />
             ))}
           </div>
           <button className="btn ghost sm" onClick={() => setPreviewOpen(false)}>
-            ✕ Cerrar preview
+            {t('mock.close')}
           </button>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { toast } from '../lib/toast'
 // ---------- BOARD ----------
 
 export function BoardView() {
-  const { current, edits, writeSection, search, statusFilter } = useApp()
+  const { current, edits, writeSection, search, statusFilter, t } = useApp()
 
   const filtered = useMemo(() => {
     if (!current) return []
@@ -24,7 +24,7 @@ export function BoardView() {
   }, [current, search, statusFilter])
 
   if (!current) {
-    return <EmptyState>Cargá un documento desde el menú izquierdo.</EmptyState>
+    return <EmptyState>{t('empty.selectDoc')}</EmptyState>
   }
 
   const baseKey = `${current.project}\u241F${current.file}`
@@ -45,8 +45,8 @@ export function BoardView() {
       {filtered.length === 0 && (
         <EmptyState>
           {search
-            ? `No hay secciones que matcheen "${search}".`
-            : 'No hay secciones con este estado.'}
+            ? t('empty.noSearch', { q: search })
+            : t('empty.noStatus')}
         </EmptyState>
       )}
     </div>
@@ -72,6 +72,7 @@ export function CanvasView() {
     resetCanvas,
     selected,
     setSelected,
+    t,
   } = useApp()
 
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -178,7 +179,7 @@ export function CanvasView() {
     window.addEventListener('pointerup', onUp)
   }
 
-  if (!current) return <EmptyState>Cargá un documento para usar el canvas.</EmptyState>
+  if (!current) return <EmptyState>{t('empty.canvas')}</EmptyState>
 
   return (
     <div className="canvas-wrap">
@@ -219,21 +220,21 @@ export function CanvasView() {
               </div>
             )
           })}
-          <div className="canvas-note">∞ Arrastrá las cards para ordenarlas · fondo para moverte · rueda para zoom</div>
+          <div className="canvas-note">{t('canvas.note')}</div>
         </div>
       </div>
 
       <div className="canvas-toolbar">
-        <button className="btn ghost xs" onClick={fitView}>⤢ Ajustar</button>
-        <button className="btn ghost xs" onClick={resetView}>⟲ Vista</button>
+        <button className="btn ghost xs" onClick={fitView}>{t('canvas.fit')}</button>
+        <button className="btn ghost xs" onClick={resetView}>{t('canvas.view')}</button>
         <button
           className="btn ghost xs"
           onClick={() => {
             resetCanvas(baseKey)
-            toast('Layout del canvas restablecido')
+            toast(t('toast.canvasReset'))
           }}
         >
-          ⟳ Reset
+          {t('canvas.reset')}
         </button>
         <span className="zoom-label">{Math.round(transform.scale * 100)}%</span>
         <button className="btn ghost xs" onClick={() => setTransform((t) => ({ ...t, scale: Math.max(0.25, +(t.scale - 0.1).toFixed(2)) }))}>−</button>
@@ -271,7 +272,7 @@ function Inspector({
   writeSection: ReturnType<typeof useApp>['writeSection']
   removeCanvasLayout: ReturnType<typeof useApp>['removeCanvasLayout']
 }) {
-  const { setSelected, setCanvasLayout } = useApp()
+  const { setSelected, setCanvasLayout, t } = useApp()
   const section = doc.sections.find((s) => s.id === sectionId)
   const key = `${baseKey}\u241E${sectionId}`
   const raw = edits[key] ?? section?.raw ?? ''
@@ -291,15 +292,15 @@ function Inspector({
   return (
     <aside className="inspector">
       <header className="inspector-head">
-        <strong>{cleanHeading(section.heading ?? 'Sección')}</strong>
-        <button className="btn-icon" onClick={() => setSelected(null)} aria-label="Cerrar inspector">✕</button>
+        <strong>{cleanHeading(section.heading ?? t('inspector.section'))}</strong>
+        <button className="btn-icon" onClick={() => setSelected(null)} aria-label={t('inspector.close')}>✕</button>
       </header>
       <div className="inspector-meta">
-        <span className="lno">tipo: {section.kind}</span>
+        <span className="lno">{t('inspector.type', { type: section.kind })}</span>
         <span className="lno">L{section.startLine}–{section.endLine}</span>
         <span className="lno">status: {section.status ?? '—'}</span>
       </div>
-      <label className="inspector-label">Markdown</label>
+      <label className="inspector-label">{t('inspector.markdown')}</label>
       <textarea
         className="inspector-textarea"
         spellCheck={false}
@@ -307,25 +308,25 @@ function Inspector({
         onChange={(e) => setDraft(e.target.value)}
       />
       <div className="inspector-preview">
-        <span className="inspector-label">Preview</span>
+        <span className="inspector-label">{t('inspector.preview')}</span>
         <Markdown key={dirty ? 'd' : 'r'} md={draft} />
       </div>
       <div className="inspector-actions">
         <button
           className="btn ghost xs"
           onClick={() => removeCanvasLayout(baseKey, sectionId)}
-          title="Volver a la posición por defecto"
+          title={t('canvas.position.title')}
         >
-          ⟲ Posición
+          {t('canvas.position')}
         </button>
-        <button className="btn ghost xs" onClick={() => { void navigator.clipboard.writeText(raw); toast('Copiada 📋') }}>
-          📋 Copiar
+        <button className="btn ghost xs" onClick={() => { void navigator.clipboard.writeText(raw); toast(t('toast.sectionCopied')) }}>
+          {t('inspector.copy')}
         </button>
         <button className="btn ghost xs" onClick={() => { const { x, y, w } = positionsDefault(doc, sectionId); setCanvasLayout(baseKey, sectionId, { x, y, w, collapsed: false }); setDraft(raw) }} disabled={!dirty && false}>
-          ↺ Restaurar
+          {t('inspector.restore')}
         </button>
         <button className="btn primary sm" onClick={save} disabled={!dirty}>
-          Guardar
+          {t('inspector.save')}
         </button>
       </div>
     </aside>

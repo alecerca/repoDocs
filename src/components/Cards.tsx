@@ -5,6 +5,7 @@ import { renderMarkdown, type StatusKey } from '../lib/markdown'
 import { brandFor } from '../lib/palette'
 import { STATUS_META as STATUS_CONFIG } from '../lib/config'
 import { toast } from '../lib/toast'
+import { useApp } from '../state/AppContext'
 
 export function cleanHeading(h: string): string {
   return h.replace(/[*`[\]()]/g, '').trim()
@@ -25,11 +26,13 @@ export function StatusChip({ status }: { status: StatusKey | null }) {
 }
 
 export function EditedDot({ edited }: { edited: boolean }) {
+  const { t } = useApp()
   if (!edited) return null
-  return <span className="edited-dot" title="Modificado aquí" />
+  return <span className="edited-dot" title={t('card.edited.title')} />
 }
 
 export function Markdown({ md }: { md: string }) {
+  const { t } = useApp()
   const html = useMemo(() => renderMarkdown(md), [md])
   const onContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const btn = (e.target as HTMLElement).closest?.('.code-copy')
@@ -37,8 +40,8 @@ export function Markdown({ md }: { md: string }) {
       const pre = btn.parentElement?.querySelector('pre')
       if (pre) {
         void navigator.clipboard?.writeText(pre.innerText.replace(/\n$/, '')).then(
-          () => toast('Código copiado 📋'),
-          () => toast('No se pudo copiar')
+          () => toast(t('toast.codeCopied')),
+          () => toast(t('toast.copyFail'))
         )
       }
     }
@@ -64,6 +67,7 @@ function EditorBox({
   onSave: () => void
   onCancel: () => void
 }) {
+  const { t } = useApp()
   return (
     <div className="editor">
       <textarea
@@ -74,16 +78,16 @@ function EditorBox({
           if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSave()
           if (e.key === 'Escape') onCancel()
         }}
-        placeholder="# Escribí markdown…"
+        placeholder={t('editor.placeholder')}
       />
       <div className="editor-bar">
-        <span className="editor-hint">Ctrl/⌘+Enter guardar · Esc cancelar</span>
+        <span className="editor-hint">{t('editor.hint')}</span>
         <div>
           <button className="btn ghost" onClick={onCancel}>
-            Cancelar
+            {t('editor.cancel')}
           </button>
           <button className="btn primary sm" onClick={onSave}>
-            Guardar
+            {t('editor.save')}
           </button>
         </div>
       </div>
@@ -102,6 +106,7 @@ export function SectionCard({
   baseKey: string
   writeSection: (baseKey: string, key: string, raw: string) => void
 }) {
+  const { t } = useApp()
   const key = sectionKey(baseKey, section.id)
   const raw = edits[key] ?? section.raw
   const edited = key in edits
@@ -118,7 +123,7 @@ export function SectionCard({
     setEditing(false)
   }
   const copySection = () => {
-    void navigator.clipboard?.writeText(raw).then(() => toast('Sección copiada 📋'))
+    void navigator.clipboard?.writeText(raw).then(() => toast(t('toast.sectionCopied')))
   }
 
   return (
@@ -128,7 +133,7 @@ export function SectionCard({
           type="button"
           className="btn-icon collapse"
           onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? 'Expandir' : 'Colapsar'}
+          aria-label={collapsed ? t('card.expand') : t('card.collapse')}
         >
           {collapsed ? '▸' : '▾'}
         </button>
@@ -141,10 +146,10 @@ export function SectionCard({
           <EditedDot edited={edited} />
           <span className="lno">L{section.startLine}</span>
         </div>
-        <button type="button" className="btn-icon" onClick={copySection} aria-label="Copiar sección">
+        <button type="button" className="btn-icon" onClick={copySection} aria-label={t('card.copySection')}>
           📋
         </button>
-        <button type="button" className="btn-icon" onClick={startEdit} aria-label="Editar sección">
+        <button type="button" className="btn-icon" onClick={startEdit} aria-label={t('card.editSection')}>
           ✏️
         </button>
       </header>
@@ -177,6 +182,7 @@ export function IntroCard({
   baseKey: string
   writeSection: (baseKey: string, key: string, raw: string) => void
 }) {
+  const { t } = useApp()
   const key = sectionKey(baseKey, INTRO_MARK)
   const raw = edits[key] ?? doc.intro
   const edited = key in edits
@@ -194,7 +200,7 @@ export function IntroCard({
         </div>
         <div className="card-meta">
           <span className="file-badge">{doc.file}</span>
-          <span className="lno">{doc.lines} líneas</span>
+          <span className="lno">{t('card.lines', { n: doc.lines })}</span>
           <span className="lno mono">{doc.sha.slice(0, 7)}</span>
           <EditedDot edited={edited} />
         </div>
@@ -225,7 +231,7 @@ export function IntroCard({
       </div>
       <footer className="card-foot">
         <button type="button" className="btn ghost xs" onClick={() => { setDraft(raw); setEditing(true) }}>
-          ✏️ Editar intro
+          {t('card.editIntro')}
         </button>
         <span className="foot-path" title={doc.path}>
           {doc.path}
@@ -236,13 +242,14 @@ export function IntroCard({
 }
 
 export function SummaryCard({ doc }: { doc: Doc }) {
+  const { t } = useApp()
   if (!doc.summary || doc.summary.entries.length === 0) return null
   return (
     <article className="card summary">
       <header className="card-head">
-        <h3 className="card-title">Resumen de estado</h3>
+        <h3 className="card-title">{t('summary.title')}</h3>
         <span className="card-meta">
-          <span className="lno">{doc.summary.entries.length} ítems</span>
+          <span className="lno">{t('card.items', { n: doc.summary.entries.length })}</span>
         </span>
       </header>
       <div className="summary-grid">

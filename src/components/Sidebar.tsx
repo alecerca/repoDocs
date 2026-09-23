@@ -3,7 +3,7 @@ import { DOC_ORDER_PRIORITY, DOC_TYPE_ICON, typeDocFile } from '../lib/registry'
 import { brandFor } from '../lib/palette'
 
 export function Sidebar() {
-  const { projects, activeProject, activeDoc, selectProject, selectDoc } = useApp()
+  const { projects, activeProject, activeDoc, selectProject, selectDoc, t } = useApp()
 
   return (
     <aside className="sidebar">
@@ -61,8 +61,7 @@ export function Sidebar() {
           ))}
         </div>
         <p className="foot-hint">
-          Los docs se leen en vivo de cada proyecto. Editalo acá (guarda en el .md real) o tocá los
-          archivos y corré <code>npm run sync</code> para refrescar.
+          {t('sidebar.foot.hint')}
         </p>
       </div>
     </aside>

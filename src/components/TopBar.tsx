@@ -28,6 +28,9 @@ export function TopBar() {
     previewOpen,
     setPreviewOpen,
     saveCurrentToFile,
+    lang,
+    setLang,
+    t,
   } = useApp()
 
   const totalStatus = statusCounts.done + statusCounts.pending + statusCounts.progress
@@ -42,13 +45,13 @@ export function TopBar() {
     a.download = `${current.project}__${current.file}`
     a.click()
     URL.revokeObjectURL(url)
-    toast('Archivo .md descargado ⬇️')
+    toast(t('toast.downloaded'))
   }
 
   const copyDoc = () => {
     if (!current) return
     const md = assembleRaw(current, edits, baseKey)
-    void navigator.clipboard?.writeText(md).then(() => toast('Markdown completo copiado 📋'))
+    void navigator.clipboard?.writeText(md).then(() => toast(t('toast.copied')))
   }
 
   const docType = typeDocFile(activeDoc)
@@ -67,7 +70,7 @@ export function TopBar() {
         <input
           className="search"
           type="search"
-          placeholder="Buscar secciones…"
+          placeholder={t('search.placeholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -79,7 +82,7 @@ export function TopBar() {
               className={`fchip${statusFilter === 'all' ? ' on' : ''}`}
               onClick={() => setStatusFilter('all')}
             >
-              Todos
+              {t('filter.all')}
             </button>
             <FilterChip status="done" count={statusCounts.done} current={statusFilter} set={setStatusFilter} />
             <FilterChip status="pending" count={statusCounts.pending} current={statusFilter} set={setStatusFilter} />
@@ -92,54 +95,73 @@ export function TopBar() {
             type="button"
             className={view === 'board' ? 'on' : ''}
             onClick={() => setView('board')}
-            title="Vista tablero"
+            title={t('view.board.title')}
           >
-            ⧉ Tablero
+            {t('view.board')}
           </button>
           <button
             type="button"
             className={view === 'canvas' ? 'on' : ''}
             onClick={() => setView('canvas')}
-            title="Canvas estilo Figma"
+            title={t('view.canvas.title')}
           >
-            ◧ Canvas
+            {t('view.canvas')}
           </button>
         </div>
 
-        <div className="font-ctrl" title="Tamaño de letra">
+        <div className="font-ctrl" title={t('font.title')}>
           <button className="btn-icon" onClick={() => setFontScale(fontScale - 10)}>A−</button>
           <span>{fontScale}%</span>
           <button className="btn-icon" onClick={() => setFontScale(fontScale + 10)}>A+</button>
         </div>
 
-        <button type="button" className="btn ghost sm" onClick={copyDoc} disabled={!current} title="Copiar markdown completo">
-          📋 Copiar
+        <div className="lang-toggle" title={t('lang.title')}>
+          <button
+            type="button"
+            className={lang === 'en' ? 'on' : ''}
+            onClick={() => setLang('en')}
+            aria-label="English"
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            className={lang === 'es' ? 'on' : ''}
+            onClick={() => setLang('es')}
+            aria-label="Español"
+          >
+            ES
+          </button>
+        </div>
+
+        <button type="button" className="btn ghost sm" onClick={copyDoc} disabled={!current} title={t('top.copy.title')}>
+          {t('top.copy')}
         </button>
         <button
           type="button"
           className="btn primary sm"
           onClick={saveCurrentToFile}
           disabled={!current}
-          title="Escribir el doc completo en su archivo .md"
+          title={t('top.save.title')}
         >
-          💾 Guardar
+          {t('top.save')}
         </button>
-        <button type="button" className="btn ghost sm" onClick={exportDoc} disabled={!current} title="Descargar .md">
-          ⬇️ Exportar
+        <button type="button" className="btn ghost sm" onClick={exportDoc} disabled={!current} title={t('top.export.title')}>
+          {t('top.export')}
         </button>
         {hasEdits && (
           <button
             type="button"
             className="btn ghost sm"
             onClick={() => {
-              if (window.confirm('¿Descartar todas tus ediciones locales y volver a los .md originales?')) {
+              if (window.confirm(t('top.reset.confirm'))) {
                 resetEdits()
-                toast('Ediciones locales descartadas')
+                toast(t('toast.reset'))
               }
             }}
-            title="Descartar ediciones locales"
+            title={t('top.reset.title')}
           >
-            ↺ Reset
+            {t('top.reset')}
           </button>
         )}
 
@@ -148,13 +170,13 @@ export function TopBar() {
             type="button"
             className={`btn ghost sm${previewOpen ? ' pressed' : ''}`}
             onClick={() => setPreviewOpen(!previewOpen)}
-            title="Preview estilo app"
+            title={t('top.app.title')}
           >
-            📱<span className="preview-label">App</span>
+            📱<span className="preview-label">{t('top.app')}</span>
           </button>
         )}
 
-        <button type="button" className="btn-icon" onClick={toggleTheme} title="Cambiar tema">
+        <button type="button" className="btn-icon" onClick={toggleTheme} title={t('top.theme.title')}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
       </div>

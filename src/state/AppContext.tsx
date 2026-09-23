@@ -13,15 +13,19 @@ import {
   type CanvasLayout,
 } from '../lib/registry'
 import { toast } from '../lib/toast'
+import { translate, type Lang, type T } from '../lib/i18n'
 import type { DocStatus } from '../generated/docs'
 
 export type ViewMode = 'board' | 'canvas'
 export type StatusFilter = 'all' | DocStatus
 
+export type { Lang }
+
 type PersistState = {
   theme: 'dark' | 'light'
   view: ViewMode
   fontScale: number
+  lang: Lang
   lastProject: string
   lastDoc: string
   search: string
@@ -52,6 +56,7 @@ const DEFAULT_UI: PersistState = {
   theme: 'dark',
   view: 'board',
   fontScale: 100,
+  lang: 'en',
   lastProject: PROJECTS[0]?.project ?? '',
   lastDoc: '',
   search: '',
@@ -71,6 +76,10 @@ function pickDoc(projectName: string, docName: string): { project: string; docNa
 type Ctx = {
   theme: 'dark' | 'light'
   toggleTheme: () => void
+  lang: Lang
+  setLang: (l: Lang) => void
+  /** Traduce una clave de UI al idioma activo. */
+  t: T
   projects: ProjectDocs[]
   activeProject: string
   activeDoc: string
@@ -163,22 +172,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [current, edits, baseKey]
   )
 
+  const t: T = useCallback((key, vars) => translate(ui.lang, key, vars), [ui.lang])
+
   const writeSection = useCallback(
     (bKey: string, key: string, raw: string) => {
       const next = { ...edits, [sectionKey(bKey, key)]: raw }
       setEdits((prev) => ({ ...prev, [sectionKey(bKey, key)]: raw }))
       void writeDoc(next).then((ok) => {
-        toast(ok ? 'Sección guardada y escrita en el .md ✓' : 'Sección guardada (local) ✓')
+        toast(ok ? t('toast.sectionSaved') : t('toast.sectionSavedLocal'))
       })
     },
-    [edits, setEdits, writeDoc]
+    [edits, setEdits, writeDoc, t]
   )
 
   const saveCurrentToFile = useCallback(() => {
     void writeDoc(null).then((ok) => {
-      toast(ok ? 'Guardado en el archivo real ✓' : 'Guardado solo en local (servir con `npm run dev`)')
+      toast(ok ? t('toast.fileWritten') : t('toast.fileLocal'))
     })
-  }, [writeDoc])
+  }, [writeDoc, t])
 
   const resetEdits = useCallback(() => {
     setEditsState({})
@@ -229,6 +240,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: Ctx = {
     theme: ui.theme,
     toggleTheme: () => patchUi({ theme: ui.theme === 'dark' ? 'light' : 'dark' }),
+    lang: ui.lang,
+    setLang: (l) => patchUi({ lang: l }),
+    t,
     projects: PROJECTS,
     activeProject,
     activeDoc,
