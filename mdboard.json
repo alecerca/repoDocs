@@ -47,7 +47,7 @@
       "docs": {
         "AGENTS.md": {
           "status": {
-            "pending": { "label": "Backlog", "plural": "Backlog" }
+            "done": { "label": "Shipped", "plural": "Shipped" }
           }
         }
       }
