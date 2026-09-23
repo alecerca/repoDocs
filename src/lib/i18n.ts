@@ -80,6 +80,30 @@ const DICT: Record<string, { en: string; es: string }> = {
   'board.collapseAll': { en: 'Collapse all', es: 'Colapsar todo' },
   'board.expandAll': { en: 'Expand all', es: 'Expandir todo' },
   'board.hint': { en: 'Double-click a header to collapse · ⌘K search', es: 'Doble clic en el título: colapsar · ⌘K buscar' },
+  // tour
+  'tour.skip': { en: 'Skip tour', es: 'Saltar tour' },
+  'tour.next': { en: 'Next', es: 'Siguiente' },
+  'tour.done': { en: 'Done', es: 'Listo' },
+  'tour.step1.title': { en: 'Search & filter', es: 'Buscá y filtrá' },
+  'tour.step1.body': {
+    en: 'Filter docs by text or status. Press Ctrl/⌘+K to jump to the search box.',
+    es: 'Filtrá los docs por texto o estado. Presioná Ctrl/⌘+K para ir a la búsqueda.',
+  },
+  'tour.step2.title': { en: 'Edit any section', es: 'Editá cualquier sección' },
+  'tour.step2.body': {
+    en: 'Click ✏️ to edit a section in place, with formatting buttons. Changes are written back to the real .md file.',
+    es: 'Tocá ✏️ para editar una sección en el lugar, con botones de formato. Los cambios se guardan en el .md real.',
+  },
+  'tour.step3.title': { en: 'Save the file', es: 'Guardá el archivo' },
+  'tour.step3.body': {
+    en: '💾 Save writes the whole document back to the project. Use ↺ Reset (undo included) to discard changes.',
+    es: '💾 Guardar escribe el documento completo en el proyecto. Usá ↺ Reset (con deshacer) para descartar cambios.',
+  },
+  'tour.step4.title': { en: 'Board or Canvas', es: 'Tablero o Canvas' },
+  'tour.step4.body': {
+    en: '⧉ Board lists sections as cards; ◧ Canvas gives you a Figma-like board you can rearrange freely.',
+    es: '⧉ Tablero lista las secciones como tarjetas; ◧ Canvas te da un tablero estilo Figma que podés reacomodar.',
+  },
   // empty / canvas
   'empty.selectDoc': { en: 'Pick a document from the left menu.', es: 'Cargá un documento desde el menú izquierdo.' },
   'empty.noSearch': { en: 'No sections match "{q}".', es: 'No hay secciones que matcheen "{q}".' },

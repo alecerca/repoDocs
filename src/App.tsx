@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { BoardView, CanvasView } from './components/Views'
 import { PhoneMock } from './components/PhoneMock'
+import { OnboardingTour } from './components/OnboardingTour'
 import { subscribeToast, type ToastMsg } from './lib/toast'
 
 function ToastHost() {
@@ -87,6 +88,7 @@ function Shell() {
       </div>
       <ToastHost />
       <PhoneMock />
+      <OnboardingTour />
     </div>
   )
 }

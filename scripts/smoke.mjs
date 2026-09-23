@@ -5,6 +5,13 @@ const errors = []
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1500, height: 900 } })
+await page.addInitScript(() => {
+  try {
+    localStorage.setItem('pb:seenTour', '1')
+  } catch {
+    /* noop */
+  }
+})
 page.on('console', (msg) => {
   if (msg.type() === 'error') errors.push('console: ' + msg.text())
 })
