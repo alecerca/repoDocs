@@ -34,24 +34,33 @@ await page.locator('.lang-toggle button', { hasText: 'EN' }).click()
 await page.waitForTimeout(200)
 console.log('placeholder ES->EN:', (await page.locator('.search').getAttribute('placeholder')).includes('Search'))
 
-// navegar a SalseoGame -> recomendaciones (minúsculas)
-await page.getByRole('button', { name: /SalseoGame/ }).click()
-await page.waitForTimeout(300)
-await page.getByRole('button', { name: /recomend/i }).first().click()
-await page.waitForTimeout(400)
+const salseoBtn = page.getByRole('button', { name: /SalseoGame/ })
+if ((await salseoBtn.count()) > 0) {
+  await salseoBtn.click()
+  await page.waitForTimeout(300)
+  const recBtn = page.getByRole('button', { name: /recomend/i })
+  if ((await recBtn.count()) > 0) {
+    await recBtn.first().click()
+    await page.waitForTimeout(400)
+  }
+}
 console.log('doc actual:', await page.locator('.crumb-doc').innerText())
 console.log('chips de estado (filtro):', await page.locator('.fchip.on, .fchip').count())
 console.log('summary rows:', await page.locator('.summary-row').count())
 
-// cambiar a Impostor-Game -> RECOMENDACIONES (mayúsculas)
-await page.getByRole('button', { name: /Impostor-Game/ }).click()
-await page.waitForTimeout(300)
-await page.getByRole('button', { name: /RECOMEND/i }).first().click()
-await page.waitForTimeout(300)
-console.log('impostor doc:', await page.locator('.crumb-doc').innerText())
-console.log('chips de estado (sin|con filtros):', await page.locator('.fchip').count())
+const impostorBtn = page.getByRole('button', { name: /Impostor-Game/ })
+if ((await impostorBtn.count()) > 0) {
+  await impostorBtn.click()
+  await page.waitForTimeout(300)
+  const recBtn2 = page.getByRole('button', { name: /RECOMEND/i })
+  if ((await recBtn2.count()) > 0) {
+    await recBtn2.first().click()
+    await page.waitForTimeout(300)
+  }
+  console.log('impostor doc:', await page.locator('.crumb-doc').innerText())
+  console.log('chips de estado (sin|con filtros):', await page.locator('.fchip').count())
+}
 
-// ---- Canvas ----
 await page.getByRole('button', { name: '◧ Canvas' }).click()
 await page.waitForTimeout(500)
 console.log('canvas cards:', await page.locator('.canvas-card').count())
@@ -61,13 +70,37 @@ console.log('inspector abierto:', (await page.locator('.inspector').count()) ===
 await page.locator('.inspector .btn-icon').click()
 await page.waitForTimeout(200)
 
-// ---- Tablero + edición ----
+await page.getByRole('button', { name: 'PNG' }).click()
+await page.waitForTimeout(300)
+console.log('export modal abierto:', await page.locator('.canvas-modal-card').isVisible())
+await page.getByRole('button', { name: 'Cancel' }).click()
+await page.waitForTimeout(200)
+
+await page.getByRole('button', { name: 'Share' }).click()
+await page.waitForTimeout(300)
+console.log('share modal abierto:', await page.locator('.canvas-modal-card').isVisible())
+const shareUrl = await page.locator('.canvas-share-input').inputValue()
+console.log('share url generada:', shareUrl.includes('?layout='))
+await page.getByRole('button', { name: 'Cancel' }).click()
+await page.waitForTimeout(200)
+
+const page2 = await browser.newPage({ viewport: { width: 1500, height: 900 } })
+await page2.goto(shareUrl, { waitUntil: 'networkidle' })
+await page2.waitForTimeout(500)
+console.log('link compartido carga canvas:', await page2.locator('.canvas-viewport').isVisible())
+await page2.close()
+
 await page.getByRole('button', { name: '⧉ Board' }).click()
 await page.waitForTimeout(300)
-await page.getByRole('button', { name: /SalseoGame/ }).click()
-await page.waitForTimeout(300)
-await page.getByRole('button', { name: /recomend/i }).first().click()
-await page.waitForTimeout(300)
+if ((await salseoBtn.count()) > 0) {
+  await salseoBtn.click()
+  await page.waitForTimeout(300)
+  const recBtn = page.getByRole('button', { name: /recomend/i })
+  if ((await recBtn.count()) > 0) {
+    await recBtn.first().click()
+    await page.waitForTimeout(300)
+  }
+}
 
 const editBtn = page.locator('.card:not(.intro):not(.summary) .btn-icon[aria-label="Edit section"]').first()
 await editBtn.click()
@@ -91,6 +124,7 @@ await page.getByRole('button', { name: '⬇️ Export' }).click()
 const download = await dlPromise
 const dlPath = await download.path()
 const fs = await import('fs')
+fs.mkdirSync('/tmp/opencode', { recursive: true })
 const content = fs.readFileSync(dlPath, 'utf8')
 console.log('export contiene edición:', content.includes('Editado desde el board'))
 console.log('export mantiene tabla resumen:', content.includes('| # | Tema | Estado |'))

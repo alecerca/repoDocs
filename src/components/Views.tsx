@@ -4,6 +4,7 @@ import type { CanvasLayout } from '../lib/registry'
 import { newSectionDefaults } from './canvasLayout'
 import { IntroCard, SummaryCard, SectionCard, EmptyState, Markdown, cleanHeading } from './Cards'
 import { toast } from '../lib/toast'
+import { CanvasExportModal, CanvasShareModal } from './CanvasModals'
 
 // ---------- BOARD ----------
 
@@ -83,19 +84,30 @@ export function CanvasView() {
     resetCanvas,
     selected,
     setSelected,
+    consumeSharedTransform,
     t,
   } = useApp()
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState({ x: 60, y: 30, scale: 1 })
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null)
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
 
   const baseKey = current ? `${current.project}\u241F${current.file}` : ''
   const sections = useMemo(
     () => (current ? current.sections.filter((s) => s.kind !== 'summary') : []),
     [current],
   )
-  const positions = canvas[baseKey] ?? {}
+  const positions = useMemo(() => canvas[baseKey] ?? {}, [canvas, baseKey])
+
+  const allCardPositions = useMemo(() => {
+    const map: Record<string, CanvasLayout> = {}
+    sections.forEach((section, idx) => {
+      map[section.id] = positions[section.id] ?? newSectionDefaults(idx)
+    })
+    return map
+  }, [sections, positions])
 
   const resetView = useCallback(() => {
     setTransform({ x: 60, y: 30, scale: 1 })
@@ -116,11 +128,14 @@ export function CanvasView() {
 
   useEffect(() => {
     setSelected(null)
-    // fit al cambiar de doc (una vez)
-    const t = window.setTimeout(fitView, 60)
-    return () => window.clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.project, current?.file])
+    const sharedTransform = consumeSharedTransform()
+    if (sharedTransform) {
+      setTransform(sharedTransform)
+      return
+    }
+    const timer = window.setTimeout(fitView, 60)
+    return () => window.clearTimeout(timer)
+  }, [current?.project, current?.file, consumeSharedTransform, fitView, setSelected])
 
   // zoom con la rueda
   useEffect(() => {
@@ -236,9 +251,10 @@ export function CanvasView() {
       </div>
 
       <div className="canvas-toolbar">
-        <button className="btn ghost xs" onClick={fitView}>{t('canvas.fit')}</button>
-        <button className="btn ghost xs" onClick={resetView}>{t('canvas.view')}</button>
+        <button type="button" className="btn ghost xs" onClick={fitView}>{t('canvas.fit')}</button>
+        <button type="button" className="btn ghost xs" onClick={resetView}>{t('canvas.view')}</button>
         <button
+          type="button"
           className="btn ghost xs"
           onClick={() => {
             resetCanvas(baseKey)
@@ -247,10 +263,43 @@ export function CanvasView() {
         >
           {t('canvas.reset')}
         </button>
+        <button
+          type="button"
+          className="btn ghost xs"
+          title={t('canvas.exportPng.title')}
+          onClick={() => setExportModalOpen(true)}
+        >
+          {t('canvas.exportPng')}
+        </button>
+        <button
+          type="button"
+          className="btn ghost xs"
+          title={t('canvas.share.title')}
+          onClick={() => setShareModalOpen(true)}
+        >
+          {t('canvas.share')}
+        </button>
         <span className="zoom-label">{Math.round(transform.scale * 100)}%</span>
-        <button className="btn ghost xs" onClick={() => setTransform((t) => ({ ...t, scale: Math.max(0.25, +(t.scale - 0.1).toFixed(2)) }))}>−</button>
-        <button className="btn ghost xs" onClick={() => setTransform((t) => ({ ...t, scale: Math.min(2.2, +(t.scale + 0.1).toFixed(2)) }))}>＋</button>
+        <button type="button" className="btn ghost xs" onClick={() => setTransform((t) => ({ ...t, scale: Math.max(0.25, +(t.scale - 0.1).toFixed(2)) }))}>−</button>
+        <button type="button" className="btn ghost xs" onClick={() => setTransform((t) => ({ ...t, scale: Math.min(2.2, +(t.scale + 0.1).toFixed(2)) }))}>＋</button>
       </div>
+
+      <CanvasExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        viewportRef={viewportRef}
+        project={current?.project ?? ''}
+        doc={current?.file ?? ''}
+      />
+
+      <CanvasShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        project={current?.project ?? ''}
+        doc={current?.file ?? ''}
+        positions={allCardPositions}
+        transform={transform}
+      />
 
       {selected && (
         <Inspector

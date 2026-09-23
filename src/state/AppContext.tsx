@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, useEffect, type ReactNode } from 'react'
 import type { Doc } from '../lib/registry'
 import {
   PROJECTS,
@@ -15,6 +15,7 @@ import {
 import { toast } from '../lib/toast'
 import { translate, type Lang, type T } from '../lib/i18n'
 import type { DocStatus } from '../generated/docs'
+import { parseShareUrl, type DecodedCanvasShare } from '../lib/canvasShare'
 
 export type ViewMode = 'board' | 'canvas'
 export type StatusFilter = 'all' | DocStatus
@@ -118,17 +119,52 @@ type Ctx = {
   readMode: boolean
   setReadMode: (b: boolean) => void
   statusCounts: { done: number; pending: number; progress: number }
+  sharedTransform: { x: number; y: number; scale: number } | null
+  consumeSharedTransform: () => { x: number; y: number; scale: number } | null
+  applyShareLayout: (decoded: DecodedCanvasShare) => void
 }
 
 const AppCtx = createContext<Ctx | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const initialShared = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    return parseShareUrl(window.location.search, window.location.hash)
+  }, [])
+
+  const initialPicked = useMemo(() => {
+    if (!initialShared) return null
+    return pickDoc(initialShared.project, initialShared.doc)
+  }, [initialShared])
+
   const [ui, setUi] = useState<PersistState>(() => {
     const persisted = load<PersistState>(UI_KEY, DEFAULT_UI)
+    if (initialShared && initialPicked) {
+      return {
+        ...DEFAULT_UI,
+        ...persisted,
+        lastProject: initialPicked.project,
+        lastDoc: initialPicked.docName,
+        view: 'canvas',
+      }
+    }
     return { ...DEFAULT_UI, ...persisted }
   })
   const [edits, setEditsState] = useState<EditsMap>(() => load(EDITS_KEY, {}))
-  const [canvas, setCanvasState] = useState<CanvasMap>(() => load(CANVAS_KEY, {}))
+  const [canvas, setCanvasState] = useState<CanvasMap>(() => {
+    const loaded = load<CanvasMap>(CANVAS_KEY, {})
+    if (initialShared && initialPicked) {
+      const key = docKey(initialPicked.project, initialPicked.docName)
+      return {
+        ...loaded,
+        [key]: { ...(loaded[key] ?? {}), ...initialShared.positions },
+      }
+    }
+    return loaded
+  })
+  const [sharedTransform, setSharedTransform] = useState<{ x: number; y: number; scale: number } | null>(
+    initialShared?.transform ?? null
+  )
   const [selected, setSelected] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [collapsedCmd, setCollapsedCmd] = useState<boolean | null>(null)
@@ -257,7 +293,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [current]
   )
 
+  const consumeSharedTransform = useCallback(() => {
+    const tr = sharedTransform
+    if (tr) {
+      setSharedTransform(null)
+    }
+    return tr
+  }, [sharedTransform])
+
+  const applyShareLayout = useCallback(
+    (decoded: DecodedCanvasShare) => {
+      const picked = pickDoc(decoded.project, decoded.doc)
+      const key = docKey(picked.project, picked.docName)
+      setCanvasState((prev) => {
+        const next = { ...prev, [key]: { ...(prev[key] ?? {}), ...decoded.positions } }
+        save(CANVAS_KEY, next)
+        return next
+      })
+      setSelected(null)
+      patchUi({
+        lastProject: picked.project,
+        lastDoc: picked.docName,
+        view: 'canvas',
+      })
+      if (decoded.transform) {
+        setSharedTransform(decoded.transform)
+      }
+      toast(translate(ui.lang, 'toast.sharedLayoutLoaded'))
+    },
+    [patchUi, ui.lang]
+  )
+
+  useEffect(() => {
+    if (initialShared) {
+      toast(translate(ui.lang, 'toast.sharedLayoutLoaded'))
+    }
+  }, [initialShared, ui.lang])
+
   const value: Ctx = {
+    sharedTransform,
+    consumeSharedTransform,
+    applyShareLayout,
     theme: ui.theme,
     toggleTheme: () => patchUi({ theme: ui.theme === 'dark' ? 'light' : 'dark' }),
     lang: ui.lang,
