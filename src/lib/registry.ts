@@ -84,6 +84,9 @@ export function assembleRaw(doc: Doc, edits: EditsMap, baseKey: string): string 
     lines.splice(r.s, Math.max(0, r.e - r.s), ...r.text.split('\n'))
   }
   let out = lines.join('\n').trimEnd()
+  if (doc._frontmatterRaw && !out.startsWith('---')) {
+    out = `${doc._frontmatterRaw.trimEnd()}\n\n${out.trimStart()}`
+  }
   return out ? `${out}\n` : out
 }
 
@@ -92,7 +95,10 @@ function rebuildSummaryText(section: { heading: string | null }, doc: Doc): stri
     .filter((e) => e.num !== '#')
     .map((e) => `| ${e.num} | ${e.tema} | ${e.estado} |`)
     .join('\n')
-  const [cNum, cTopic, cStatus] = SUMMARY.headers
+  const headers = doc.summary?.headers && doc.summary.headers.length >= 3
+    ? doc.summary.headers
+    : SUMMARY.headers
+  const [cNum, cTopic, cStatus] = headers
   const heading = section.heading ? `${section.heading}\n` : ''
   return `${heading}\n| ${cNum} | ${cTopic} | ${cStatus} |\n| --- | --- | --- |\n${rows}`
 }
