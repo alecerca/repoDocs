@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "smoke": "node scripts/run-smoke.mjs",
+    "test": "node --test test/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

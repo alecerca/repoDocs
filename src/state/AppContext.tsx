@@ -117,7 +117,7 @@ type Ctx = {
   collapseAll: (c: boolean) => void
   readMode: boolean
   setReadMode: (b: boolean) => void
-  statusCounts: { done: number; pending: number; progress: number }
+  statusCounts: Record<string, number>
 }
 
 const AppCtx = createContext<Ctx | null>(null)

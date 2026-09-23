@@ -25,14 +25,75 @@ hljs.registerLanguage('diff', diff)
 hljs.registerLanguage('text', plaintext)
 hljs.registerLanguage('plaintext', plaintext)
 
-import { STATUS_META } from './config'
+import { STATUS_META, BRANDS } from './config'
+import { DOCS } from '../generated/docs'
 
-export type StatusKey = 'done' | 'pending' | 'progress'
+export type StatusKey = 'done' | 'pending' | 'progress' | (string & {})
 
-const STATUS_EMOJI: Record<string, StatusKey> = Object.fromEntries(
-  STATUS_META.map((s) => [s.emoji, s.key as StatusKey])
-)
-const STATUS_EMOJI_ALT = STATUS_META.map((s) => s.emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+function collectAllStatusEmojis(): { map: Record<string, string>; alt: string } {
+  const map: Record<string, string> = {}
+
+  for (const s of STATUS_META) {
+    if (s.emoji) map[s.emoji] = s.key
+  }
+
+  for (const brand of Object.values(BRANDS)) {
+    if (Array.isArray(brand.status)) {
+      for (const s of brand.status) {
+        if (s.emoji && s.key) map[s.emoji] = s.key
+      }
+    } else if (brand.status && typeof brand.status === 'object') {
+      for (const [k, v] of Object.entries(brand.status)) {
+        if (typeof v === 'string') map[v] = k
+        else if (v && typeof v === 'object' && v.emoji) map[v.emoji] = k
+      }
+    }
+
+    if (brand.docs && typeof brand.docs === 'object') {
+      for (const d of Object.values(brand.docs)) {
+        if (Array.isArray(d.status)) {
+          for (const s of d.status) {
+            if (s.emoji && s.key) map[s.emoji] = s.key
+          }
+        } else if (d.status && typeof d.status === 'object') {
+          for (const [k, v] of Object.entries(d.status)) {
+            if (typeof v === 'string') map[v] = k
+            else if (v && typeof v === 'object' && v.emoji) map[v.emoji] = k
+          }
+        }
+      }
+    }
+
+    if (brand.statusByDoc && typeof brand.statusByDoc === 'object') {
+      for (const d of Object.values(brand.statusByDoc)) {
+        if (Array.isArray(d)) {
+          for (const s of d) {
+            if (s.emoji && s.key) map[s.emoji] = s.key
+          }
+        } else if (typeof d === 'object' && d !== null) {
+          for (const [k, v] of Object.entries(d)) {
+            if (typeof v === 'string') map[v] = k
+            else if (v && typeof v === 'object' && v.emoji) map[v.emoji] = k
+          }
+        }
+      }
+    }
+  }
+
+  for (const doc of DOCS) {
+    if (doc.statusMeta) {
+      for (const s of doc.statusMeta) {
+        if (s.emoji && s.key) map[s.emoji] = s.key
+      }
+    }
+  }
+
+  const emojis = Object.keys(map).sort((a, b) => b.length - a.length)
+  const alt = emojis.map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  return { map, alt }
+}
+
+const { map: STATUS_EMOJI, alt: STATUS_EMOJI_ALT } = collectAllStatusEmojis()
 
 const PRIORITY_EMOJI: Record<string, string> = {
   '🥇': 'priority gold',

@@ -12,7 +12,8 @@
  * a mano con `npm run sync` para refrescar tras tocar un .md.
  */
 import { readdirSync, readFileSync, writeFileSync, statSync, mkdirSync } from 'node:fs'
-import { join, basename, extname } from 'node:path'
+import { join, basename, extname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { loadConfig } from './config.mjs'
 
 const cfg = loadConfig()
@@ -24,30 +25,250 @@ const APPCONFIG_FILE = join(OUT_DIR, 'appconfig.ts')
 const SELF = 'proyectos-board'
 const SKIP = new Set([SELF, 'node_modules', '.git', '.expo', 'dist', '.vscode', '.claude', '.idea', 'android', 'ios'])
 
-const STATUS_PATTERNS = cfg.status.map((s) => ({
-  key: s.key,
-  label: s.label,
-  emoji: s.emoji,
-  plural: s.plural,
-  re: new RegExp(`${escapeRe(s.emoji)}|${s.hint ?? ''}`, 'i'),
-}))
-
-function escapeRe(str) {
+export function escapeRe(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function detectStatus(text) {
+export function buildStatusPatterns(statusList) {
+  return statusList.map((s) => {
+    const hintPart = s.hint ? `|${s.hint}` : ''
+    return {
+      key: s.key,
+      label: s.label,
+      emoji: s.emoji,
+      plural: s.plural,
+      re: new RegExp(`${escapeRe(s.emoji)}${hintPart}`, 'i'),
+    }
+  })
+}
+
+export const STATUS_PATTERNS = buildStatusPatterns(cfg.status)
+
+export function detectStatus(text, patterns = STATUS_PATTERNS) {
   const counts = {}
-  for (const s of STATUS_PATTERNS) counts[s.key] = 0
-  for (const s of STATUS_PATTERNS) {
+  for (const s of patterns) counts[s.key] = 0
+  for (const s of patterns) {
     const matches = text.match(s.re)
     if (matches) counts[s.key] = matches.length
   }
-  const order = STATUS_PATTERNS.map((s) => s.key)
+  const order = patterns.map((s) => s.key)
   return order
     .filter((k) => (counts[k] ?? 0) > 0)
     .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0))
     .map((k) => ({ key: k }))
+}
+
+export function applyStatusOverrides(baseStatusList, overrides) {
+  if (!overrides) return baseStatusList
+  const result = baseStatusList.map((s) => ({ ...s }))
+
+  if (Array.isArray(overrides)) {
+    for (const item of overrides) {
+      if (!item || typeof item !== 'object' || !item.key) continue
+      const idx = result.findIndex((s) => s.key === item.key)
+      if (idx >= 0) {
+        result[idx] = {
+          ...result[idx],
+          ...item,
+          emoji: item.emoji ?? result[idx].emoji,
+          label: item.label ?? result[idx].label,
+          plural: item.plural ?? result[idx].plural,
+          hint: item.hint ?? result[idx].hint,
+        }
+      } else {
+        result.push({
+          key: item.key,
+          emoji: item.emoji ?? '•',
+          label: item.label ?? item.key,
+          plural: item.plural ?? item.label ?? item.key,
+          hint: item.hint,
+        })
+      }
+    }
+  } else if (typeof overrides === 'object' && overrides !== null) {
+    for (const [key, val] of Object.entries(overrides)) {
+      const idx = result.findIndex((s) => s.key === key)
+      if (typeof val === 'string') {
+        if (idx >= 0) {
+          result[idx] = { ...result[idx], emoji: val }
+        } else {
+          result.push({
+            key,
+            emoji: val,
+            label: key,
+            plural: key,
+          })
+        }
+      } else if (typeof val === 'object' && val !== null) {
+        if (idx >= 0) {
+          result[idx] = {
+            ...result[idx],
+            ...val,
+            emoji: val.emoji ?? result[idx].emoji,
+            label: val.label ?? result[idx].label,
+            plural: val.plural ?? result[idx].plural,
+            hint: val.hint ?? result[idx].hint,
+          }
+        } else {
+          result.push({
+            key,
+            emoji: val.emoji ?? '•',
+            label: val.label ?? key,
+            plural: val.plural ?? val.label ?? key,
+            hint: val.hint,
+          })
+        }
+      }
+    }
+  }
+
+  return result
+}
+
+export function parseYamlStatus(yamlText) {
+  try {
+    const json = JSON.parse(yamlText)
+    if (json && json.status) return json.status
+  } catch {
+    // not JSON
+  }
+
+  const lines = yamlText.split('\n')
+  let statusLines = []
+  let capturing = false
+  let baseIndent = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (!capturing) {
+      const match = line.match(/^status:\s*(.*)$/)
+      if (match) {
+        const afterColon = match[1].trim()
+        if (afterColon) {
+          try {
+            return JSON.parse(afterColon)
+          } catch {
+            return afterColon
+          }
+        }
+        capturing = true
+      }
+    } else {
+      if (line.trim() === '') continue
+      const matchIndent = line.match(/^(\s+)(.*)$/)
+      if (!matchIndent) break
+      const indent = matchIndent[1].length
+      if (baseIndent === -1) baseIndent = indent
+      if (indent < baseIndent) break
+      statusLines.push(line)
+    }
+  }
+
+  if (statusLines.length === 0) return null
+
+  const isList = statusLines.some((l) => /^\s*-\s+/.test(l))
+  if (isList) {
+    const items = []
+    let currentItem = null
+    for (const l of statusLines) {
+      const itemMatch = l.match(/^\s*-\s*(.*)$/)
+      if (itemMatch) {
+        if (currentItem) items.push(currentItem)
+        currentItem = {}
+        const rest = itemMatch[1].trim()
+        if (rest.includes(':')) {
+          const colonIdx = rest.indexOf(':')
+          const k = rest.slice(0, colonIdx).trim()
+          const v = rest.slice(colonIdx + 1).trim().replace(/^['"]|['"]$/g, '')
+          currentItem[k] = v
+        }
+      } else if (currentItem) {
+        const propMatch = l.match(/^\s*([a-zA-Z0-9_-]+):\s*(.*)$/)
+        if (propMatch) {
+          currentItem[propMatch[1].trim()] = propMatch[2].trim().replace(/^['"]|['"]$/g, '')
+        }
+      }
+    }
+    if (currentItem) items.push(currentItem)
+    return items
+  } else {
+    const map = {}
+    let currentKey = null
+    for (const l of statusLines) {
+      const nested = l.match(/^\s{4,}([a-zA-Z0-9_-]+):\s*(.*)$/)
+      const kv = l.match(/^\s{1,3}([a-zA-Z0-9_-]+):\s*(.*)$/)
+      if (nested && currentKey && typeof map[currentKey] === 'object') {
+        map[currentKey][nested[1].trim()] = nested[2].trim().replace(/^['"]|['"]$/g, '')
+      } else if (kv) {
+        const k = kv[1].trim()
+        const v = kv[2].trim().replace(/^['"]|['"]$/g, '')
+        if (!v) {
+          map[k] = {}
+          currentKey = k
+        } else {
+          map[k] = v
+          currentKey = null
+        }
+      }
+    }
+    return map
+  }
+}
+
+export function extractFrontmatter(raw) {
+  if (!raw.startsWith('---')) return { frontmatter: null, content: raw }
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)
+  if (!match) return { frontmatter: null, content: raw }
+  const yamlText = match[1]
+  const parsed = parseYamlStatus(yamlText)
+  return { frontmatter: parsed, content: raw }
+}
+
+export function resolveDocStatus(globalStatus, brand, docFile, rawContent) {
+  let list = globalStatus.map((s) => ({ ...s }))
+
+  // 1. Project-level status override
+  if (brand?.status) {
+    list = applyStatusOverrides(list, brand.status)
+  }
+
+  // 2. Doc-level status override in project brand config
+  if (brand) {
+    const nameWithoutExt = basename(docFile, extname(docFile))
+    const docConfig = brand.docs?.[docFile] ?? brand.docs?.[nameWithoutExt]
+    const docStatus = docConfig?.status ?? brand.statusByDoc?.[docFile] ?? brand.statusByDoc?.[nameWithoutExt]
+    if (docStatus) {
+      list = applyStatusOverrides(list, docStatus)
+    }
+  }
+
+  // 3. Frontmatter status override in markdown doc
+  if (rawContent) {
+    const { frontmatter } = extractFrontmatter(rawContent)
+    if (frontmatter) {
+      list = applyStatusOverrides(list, frontmatter)
+    }
+  }
+
+  return list
+}
+
+export function isStatusCustomized(globalStatus, docStatus) {
+  if (globalStatus.length !== docStatus.length) return true
+  for (let i = 0; i < globalStatus.length; i++) {
+    const g = globalStatus[i]
+    const d = docStatus[i]
+    if (
+      g.key !== d.key ||
+      g.emoji !== d.emoji ||
+      g.label !== d.label ||
+      g.plural !== d.plural ||
+      g.hint !== d.hint
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 function slugify(str, idx) {
@@ -109,9 +330,13 @@ function findSummaryTable(lines) {
   return null
 }
 
-function parseDoc(filePath, projectName) {
+export function parseDoc(filePath, projectName, brand = null) {
   const raw = readFileSync(filePath, 'utf8')
   const lines = raw.split('\n')
+  const docFile = basename(filePath)
+  const docStatusList = resolveDocStatus(cfg.status, brand, docFile, raw)
+  const docStatusPatterns = buildStatusPatterns(docStatusList)
+  const isCustom = isStatusCustomized(cfg.status, docStatusList)
 
   const titleMatch = raw.match(/^#\s+(.+)$/m)
   const title = titleMatch ? titleMatch[1].trim() : basename(filePath, extname(filePath))
@@ -128,7 +353,7 @@ function parseDoc(filePath, projectName) {
   const flush = (heading, start, end, headingLevel) => {
     const rawBlock = lines.slice(start, end + 1).join('\n')
     if (!rawBlock.trim()) return
-    const statuses = detectStatus(rawBlock).map((s) => s.key)
+    const statuses = detectStatus(rawBlock, docStatusPatterns).map((s) => s.key)
     sections.push({
       id: slugify(heading || rawBlock.slice(0, 60), sections.length),
       heading: heading ? heading.trim() : null,
@@ -171,13 +396,14 @@ function parseDoc(filePath, projectName) {
     }
   }
 
-  const statusCounts = { done: 0, pending: 0, progress: 0 }
+  const statusCounts = {}
+  for (const s of docStatusList) statusCounts[s.key] = 0
   for (const s of sections) {
-    if (s.status) statusCounts[s.status]++
+    if (s.status) statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1
   }
 
-  return {
-    file: basename(filePath),
+  const docObj = {
+    file: docFile,
     path: filePath,
     project: projectName,
     title,
@@ -192,6 +418,17 @@ function parseDoc(filePath, projectName) {
     lines: lines.length,
     bytes: raw.length,
   }
+
+  if (isCustom) {
+    docObj.statusMeta = docStatusList.map((s) => ({
+      key: s.key,
+      emoji: s.emoji,
+      label: s.label,
+      plural: s.plural,
+    }))
+  }
+
+  return docObj
 }
 
 function hash(str) {
@@ -203,7 +440,7 @@ function hash(str) {
   return (h >>> 0).toString(16)
 }
 
-function collect() {
+export function collect() {
   const projects = readdirSync(PROYECTOS_DIR)
     .filter((name) => {
       if (SKIP.has(name) || name.startsWith('.')) return false
@@ -224,24 +461,26 @@ function collect() {
 
   const docs = []
   for (const p of projects) {
+    const brand = cfg.brands?.[p.name] ?? null
     for (const md of p.mds) {
-      docs.push(parseDoc(join(p.dir, md), p.name))
+      docs.push(parseDoc(join(p.dir, md), p.name, brand))
     }
   }
   docs.sort((a, b) => a.project.localeCompare(b.project) || a.file.localeCompare(b.file))
   return { projects: projects.length, docs }
 }
 
-function writeDocs(docs, projectsCount) {
+export function writeDocs(docs, projectsCount) {
   const generatedAt = new Date().toISOString()
   const code =
     `// AUTO-GENERADO por scripts/sync-docs.mjs — NO editar a mano.\n` +
     `// Fuente: *.md de cada proyecto en ${JSON.stringify(PROYECTOS_DIR)}\n` +
     `// Generado: ${generatedAt}\n\n` +
     `export interface DocSummaryEntry {\n  num: string\n  tema: string\n  estado: string\n}\n\n` +
-    `export type DocStatus = 'done' | 'pending' | 'progress'\n\n` +
+    `export type DocStatus = 'done' | 'pending' | 'progress' | (string & {})\n\n` +
+    `export interface DocStatusMeta {\n  key: string\n  emoji: string\n  label: string\n  plural: string\n}\n\n` +
     `export interface DocSection {\n  id: string\n  heading: string | null\n  level: number\n  kind: 'section' | 'chunk' | 'summary'\n  raw: string\n  startLine: number\n  endLine: number\n  status: DocStatus | null\n}\n\n` +
-    `export interface Doc {\n  file: string\n  path: string\n  project: string\n  title: string\n  subtitle: string\n  raw: string\n  intro: string\n  introEndLine: number\n  sections: DocSection[]\n  summary: { entries: DocSummaryEntry[] } | null\n  statusCounts: Record<DocStatus, number>\n  sha: string\n  lines: number\n  bytes: number\n}\n\n` +
+    `export interface Doc {\n  file: string\n  path: string\n  project: string\n  title: string\n  subtitle: string\n  raw: string\n  intro: string\n  introEndLine: number\n  sections: DocSection[]\n  summary: { entries: DocSummaryEntry[] } | null\n  statusCounts: Record<string, number>\n  statusMeta?: DocStatusMeta[]\n  sha: string\n  lines: number\n  bytes: number\n}\n\n` +
     `export const DOCS: Doc[] = ${JSON.stringify(docs, null, 2)}\n`
   mkdirSync(OUT_DIR, { recursive: true })
   writeFileSync(OUT_FILE, code, 'utf8')
@@ -249,7 +488,7 @@ function writeDocs(docs, projectsCount) {
   console.log(`[sync-docs] ${docs.length} docs en ${projectsCount} proyectos (${totalSections} secciones) → ${OUT_FILE}`)
 }
 
-function writeAppConfig() {
+export function writeAppConfig() {
   const generatedAt = new Date().toISOString()
   const statusMeta = cfg.status.map((s) => ({
     key: s.key,
@@ -262,7 +501,7 @@ function writeAppConfig() {
     `// Generado: ${generatedAt}\n\n` +
     `export interface StatusMeta {\n  key: string\n  emoji: string\n  label: string\n  plural: string\n}\n` +
     `export const STATUS_META: StatusMeta[] = ${JSON.stringify(statusMeta, null, 2)}\n\n` +
-    `export interface Brand {\n  name: string\n  tagline: string\n  accent: string\n  accent2: string\n  darkBg: string\n  surface: string\n  surfaceAlt: string\n  text: string\n  muted: string\n  palette: string[]\n  stack: string[]\n}\n` +
+    `export interface Brand {\n  name: string\n  tagline: string\n  accent: string\n  accent2: string\n  darkBg: string\n  surface: string\n  surfaceAlt: string\n  text: string\n  muted: string\n  palette: string[]\n  stack: string[]\n  status?: StatusMeta[] | Record<string, string | Partial<StatusMeta>>\n  docs?: Record<string, { status?: StatusMeta[] | Record<string, string | Partial<StatusMeta>> }>\n  statusByDoc?: Record<string, StatusMeta[] | Record<string, string | Partial<StatusMeta>>>\n}\n` +
     `export const BRANDS: Record<string, Brand> = ${JSON.stringify(cfg.brands ?? {}, null, 2)}\n\n` +
     `export interface AppPreview {\n  forProject?: string\n  name: string\n  screen: Record<string, unknown>\n}\n` +
     `export const APPS: AppPreview[] = ${JSON.stringify(cfg.apps ?? [], null, 2)}\n\n` +
@@ -274,11 +513,13 @@ function writeAppConfig() {
   writeFileSync(APPCONFIG_FILE, code, 'utf8')
 }
 
-function main() {
+export function main() {
   const { projects, docs } = collect()
   writeDocs(docs, projects)
   writeAppConfig()
   console.log(`[sync-docs] appconfig → ${APPCONFIG_FILE}`)
 }
 
-main()
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  main()
+}
