@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Keyboard shortcuts**: `Ctrl/⌘+K` focuses search, `B` / `C` switch board ↔ canvas, `E` edits the
+  focused section (esc is always available to abort).
+- **Formatting toolbar** in the inline editor (bold, italic, strikethrough, inline code, link, lists,
+  quote) — write Markdown without knowing the syntax.
+- **Per-section undo**: edited cards get a `↩` restore button, and **`↺ Reset` now offers Undo**
+  inside the toast.
+- **Collapse all / expand all** on the board, plus a keyboard hint line.
+- **Clickable status chips**: clicking a chip on a card (or in the summary) filters the board to that
+  status; clicking the active one clears the filter.
+- **First-run onboarding tour**: 4 coach-marks pointing at search, section editing, save and the
+  view switcher (dismissible; stored in `pb:seenTour`).
+- **Focus / reading mode** (👓 toggle in the topbar): hides chrome, centers and enlarges the text,
+  persisted in `pb:ui`.
 - **Web preview**: alongside the phone-style app mock, a desktop **browser preview** (config-driven
   via `websites[]`), switchable in the same overlay with an App | Web toggle.
 - Demo docs and demo config are now **in English**; the summary table headers are config-driven

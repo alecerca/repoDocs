@@ -13,9 +13,13 @@ with `.md` files, turns modern documents into cards on a board (or a canvas), an
 
 - **Read** long docs as separate, collapsible sections.
 - **Search** and **filter by status** (✅ done · 📌 pending · 🔶 in progress, configurable per project).
-- **Edit** any section in place with live Markdown preview.
+- **Edit** any section in place with live Markdown preview and a **formatting toolbar** (no Markdown
+  knowledge required).
 - **Export / write back** the full Markdown to the original `.md` files.
 - **Preview** a phone-style mock **and/or a desktop web mock** of your project (config-driven, optional).
+- **Smooth UX**: keyboard shortcuts (`Ctrl/⌘+K`, `B`/`C`, `E`), per-section undo and undo on reset,
+  collapse all / expand all, clickable status chips, a first-run **onboarding tour**, and a
+  distraction-free **focus/reading mode**. UI is bilingual (EN/ES).
 
 ## Quick start
 
