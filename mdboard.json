@@ -45,7 +45,7 @@
         "progress": { "label": "Work in progress", "plural": "Work in progress" }
       },
       "docs": {
-        "RECOMENDACIONES.md": {
+        "AGENTS.md": {
           "status": {
             "pending": { "label": "Backlog", "plural": "Backlog" }
           }
