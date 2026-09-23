@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Doc, DocSection } from '../lib/registry'
 import { sectionKey, INTRO_MARK, type EditsMap } from '../lib/registry'
 import { renderMarkdown, type StatusKey } from '../lib/markdown'
@@ -126,8 +126,16 @@ export function SectionCard({
     void navigator.clipboard?.writeText(raw).then(() => toast(t('toast.sectionCopied')))
   }
 
+  useEffect(() => {
+    const h = (e: Event) => {
+      if ((e as CustomEvent).detail === key) startEdit()
+    }
+    window.addEventListener('repoDocs:edit', h)
+    return () => window.removeEventListener('repoDocs:edit', h)
+  }, [key, startEdit])
+
   return (
-    <article className={`card${collapsed ? ' collapsed' : ''}${edited ? ' edited' : ''}`} data-sid={section.id}>
+    <article className={`card${collapsed ? ' collapsed' : ''}${edited ? ' edited' : ''}`} data-sid={section.id} data-edit={key}>
       <header className="card-head" onDoubleClick={() => setCollapsed((c) => !c)}>
         <button
           type="button"
@@ -190,8 +198,19 @@ export function IntroCard({
   const [draft, setDraft] = useState('')
   const brand = brandFor(doc.project)
 
+  useEffect(() => {
+    const h = (e: Event) => {
+      if ((e as CustomEvent).detail === key) {
+        setDraft(raw)
+        setEditing(true)
+      }
+    }
+    window.addEventListener('repoDocs:edit', h)
+    return () => window.removeEventListener('repoDocs:edit', h)
+  }, [key, raw, setDraft, setEditing])
+
   return (
-    <article className={`card intro${edited ? ' edited' : ''}`}>
+    <article className={`card intro${edited ? ' edited' : ''}`} data-edit={key}>
       <header className="card-head">
         <span className="intro-avatar">{doc.project.slice(0, 1)}</span>
         <div className="intro-titles">

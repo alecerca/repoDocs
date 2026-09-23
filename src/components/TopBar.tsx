@@ -68,6 +68,7 @@ export function TopBar() {
 
       <div className="top-actions">
         <input
+          id="global-search"
           className="search"
           type="search"
           placeholder={t('search.placeholder')}

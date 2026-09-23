@@ -19,13 +19,48 @@ function ToastHost() {
 }
 
 function Shell() {
-  const { view, fontScale, theme, lang } = useApp()
+  const { view, fontScale, theme, lang, setView } = useApp()
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${Math.round(16 * (fontScale / 100))}px`
     document.documentElement.dataset.theme = theme
     document.documentElement.lang = lang
   }, [fontScale, theme, lang])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey
+      const target = e.target as HTMLElement | null
+      const typing = target?.closest?.('input, textarea, select, [contenteditable="true"]')
+      if (mod && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        document.getElementById('global-search')?.focus()
+        return
+      }
+      if (typing || mod) return
+      const k = e.key.toLowerCase()
+      if (k === 'b') {
+        setView('board')
+        return
+      }
+      if (k === 'c') {
+        setView('canvas')
+        return
+      }
+      if (k === 'e') {
+        const card = target?.closest?.('[data-edit]') as HTMLElement | null
+        const ekey = card?.getAttribute('data-edit')
+        if (ekey) {
+          window.dispatchEvent(new CustomEvent('repoDocs:edit', { detail: ekey }))
+        } else {
+          const inspectorTa = document.querySelector('.inspector textarea') as HTMLTextAreaElement | null
+          inspectorTa?.focus()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [setView])
 
   return (
     <div className="app">
