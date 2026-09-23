@@ -40,7 +40,17 @@
       "text": "#ececee",
       "muted": "#84848c",
       "palette": ["#7f8bb3", "#9f7fb8", "#6f9cb3", "#7d84a8"],
-      "stack": ["React", "Vite", "Markdown"]
+      "stack": ["React", "Vite", "Markdown"],
+      "status": {
+        "progress": { "label": "Work in progress", "plural": "Work in progress" }
+      },
+      "docs": {
+        "RECOMENDACIONES.md": {
+          "status": {
+            "pending": { "label": "Backlog", "plural": "Backlog" }
+          }
+        }
+      }
     }
   },
   "apps": [
