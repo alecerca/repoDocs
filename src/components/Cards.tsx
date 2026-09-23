@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Doc, DocSection } from '../lib/registry'
 import { sectionKey, INTRO_MARK, type EditsMap } from '../lib/registry'
 import { renderMarkdown, type StatusKey } from '../lib/markdown'
@@ -68,9 +68,80 @@ function EditorBox({
   onCancel: () => void
 }) {
   const { t } = useApp()
+  const taRef = useRef<HTMLTextAreaElement>(null)
+
+  const wrap = (before: string, after: string, placeholder = 'text') => {
+    const el = taRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const sel = value.slice(start, end)
+    const inserted = sel ? before + sel + after : before + placeholder + after
+    onChange(value.slice(0, start) + inserted + value.slice(end))
+    requestAnimationFrame(() => {
+      el.focus()
+      const caret = sel
+        ? start + before.length + sel.length + after.length
+        : start + before.length + placeholder.length
+      el.setSelectionRange(caret, caret)
+    })
+  }
+
+  const linePrefix = (prefix: string) => {
+    const el = taRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1
+    onChange(value.slice(0, lineStart) + prefix + value.slice(lineStart))
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(start + prefix.length, start + prefix.length)
+    })
+  }
+
+  const T = {
+    bold: t('editor.toolbar.bold'),
+    italic: t('editor.toolbar.italic'),
+    strike: t('editor.toolbar.strike'),
+    code: t('editor.toolbar.code'),
+    link: t('editor.toolbar.link'),
+    bullet: t('editor.toolbar.bullet'),
+    number: t('editor.toolbar.number'),
+    quote: t('editor.toolbar.quote'),
+    label: t('editor.toolbar.label'),
+  }
+
   return (
     <div className="editor">
+      <div className="editor-toolbar" role="toolbar" aria-label={T.label}>
+        <button type="button" className="tool-btn b" onClick={() => wrap('**', '**', 'bold')} title={T.bold}>
+          B
+        </button>
+        <button type="button" className="tool-btn i" onClick={() => wrap('*', '*', 'italic')} title={T.italic}>
+          I
+        </button>
+        <button type="button" className="tool-btn s" onClick={() => wrap('~~', '~~', 'strikethrough')} title={T.strike}>
+          S
+        </button>
+        <button type="button" className="tool-btn code" onClick={() => wrap('`', '`', 'code')} title={T.code}>
+          {'<>'}
+        </button>
+        <button type="button" className="tool-btn" onClick={() => wrap('[', '](url)', 'text')} title={T.link}>
+          🔗
+        </button>
+        <span className="tool-sep" />
+        <button type="button" className="tool-btn" onClick={() => linePrefix('- ')} title={T.bullet}>
+          •–
+        </button>
+        <button type="button" className="tool-btn" onClick={() => linePrefix('1. ')} title={T.number}>
+          1.
+        </button>
+        <button type="button" className="tool-btn" onClick={() => linePrefix('> ')} title={T.quote}>
+          ❝
+        </button>
+      </div>
       <textarea
+        ref={taRef}
         spellCheck={false}
         value={value}
         onChange={(e) => onChange(e.target.value)}

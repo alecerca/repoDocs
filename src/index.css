@@ -1027,6 +1027,47 @@ button {
   border-color: var(--accent);
 }
 
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+}
+
+.tool-btn {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  border-radius: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tool-btn:hover {
+  background: var(--bg3);
+  border-color: var(--border2);
+}
+
+.tool-btn.b { font-weight: 700; }
+.tool-btn.i { font-style: italic; }
+.tool-btn.s { text-decoration: line-through; }
+.tool-btn.code { font-size: 11px; }
+
+.tool-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border2);
+  margin: 0 3px;
+}
+
 .editor-bar {
   display: flex;
   align-items: center;
