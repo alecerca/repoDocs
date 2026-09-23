@@ -1673,15 +1673,33 @@ button {
   position: fixed;
   bottom: 18px;
   right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: var(--text);
   color: var(--bg);
   font-size: 13px;
   font-weight: 600;
   border-radius: 12px;
-  padding: 10px 16px;
+  padding: 10px 12px 10px 16px;
   box-shadow: var(--shadow);
   z-index: 60;
   animation: toast-in 0.2s ease;
+}
+
+.toast-action {
+  background: var(--bg2);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toast-action:hover {
+  background: var(--bg3);
 }
 
 @keyframes toast-in {

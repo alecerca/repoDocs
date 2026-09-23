@@ -4,18 +4,34 @@ import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { BoardView, CanvasView } from './components/Views'
 import { PhoneMock } from './components/PhoneMock'
-import { subscribeToast } from './lib/toast'
+import { subscribeToast, type ToastMsg } from './lib/toast'
 
 function ToastHost() {
-  const [msg, setMsg] = useState<string | null>(null)
-  useEffect(() => subscribeToast((m) => setMsg(m)), [])
+  const [toastState, setToastState] = useState<ToastMsg | null>(null)
+  useEffect(() => subscribeToast((m) => setToastState(m)), [])
   useEffect(() => {
-    if (!msg) return
-    const t = window.setTimeout(() => setMsg(null), 2200)
+    if (!toastState) return
+    const t = window.setTimeout(() => setToastState(null), toastState.timeout ?? 2200)
     return () => window.clearTimeout(t)
-  }, [msg])
-  if (!msg) return null
-  return <div className="toast">{msg}</div>
+  }, [toastState])
+  if (!toastState) return null
+  return (
+    <div className="toast">
+      <span>{toastState.msg}</span>
+      {toastState.action && (
+        <button
+          type="button"
+          className="toast-action"
+          onClick={() => {
+            toastState.action?.onClick()
+            setToastState(null)
+          }}
+        >
+          {toastState.action.label}
+        </button>
+      )}
+    </div>
+  )
 }
 
 function Shell() {

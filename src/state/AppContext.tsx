@@ -192,9 +192,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [writeDoc, t])
 
   const resetEdits = useCallback(() => {
+    const backup = edits
     setEditsState({})
     save(EDITS_KEY, {})
-  }, [])
+    if (Object.keys(backup).length > 0) {
+      toast({
+        msg: t('toast.reset'),
+        action: {
+          label: t('toast.undo'),
+          onClick: () => {
+            setEditsState(backup)
+            save(EDITS_KEY, backup)
+          },
+        },
+      })
+    }
+  }, [edits, t])
 
   const setCanvasLayout = useCallback(
     (bKey: string, sectionId: string, layout: CanvasLayout) => {

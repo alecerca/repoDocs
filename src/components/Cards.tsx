@@ -177,7 +177,7 @@ export function SectionCard({
   baseKey: string
   writeSection: (baseKey: string, key: string, raw: string) => void
 }) {
-  const { t } = useApp()
+  const { t, setEdits } = useApp()
   const key = sectionKey(baseKey, section.id)
   const raw = edits[key] ?? section.raw
   const edited = key in edits
@@ -228,6 +228,22 @@ export function SectionCard({
         <button type="button" className="btn-icon" onClick={copySection} aria-label={t('card.copySection')}>
           📋
         </button>
+        {edited && (
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() =>
+              setEdits((prev) => {
+                const next = { ...prev }
+                delete next[key]
+                return next
+              })
+            }
+            aria-label={t('card.restore')}
+          >
+            ↩
+          </button>
+        )}
         <button type="button" className="btn-icon" onClick={startEdit} aria-label={t('card.editSection')}>
           ✏️
         </button>
@@ -261,7 +277,7 @@ export function IntroCard({
   baseKey: string
   writeSection: (baseKey: string, key: string, raw: string) => void
 }) {
-  const { t } = useApp()
+  const { t, setEdits } = useApp()
   const key = sectionKey(baseKey, INTRO_MARK)
   const raw = edits[key] ?? doc.intro
   const edited = key in edits
@@ -320,6 +336,21 @@ export function IntroCard({
         )}
       </div>
       <footer className="card-foot">
+        {edited && (
+          <button
+            type="button"
+            className="btn ghost xs"
+            onClick={() =>
+              setEdits((prev) => {
+                const next = { ...prev }
+                delete next[key]
+                return next
+              })
+            }
+          >
+            {t('card.restore')}
+          </button>
+        )}
         <button type="button" className="btn ghost xs" onClick={() => { setDraft(raw); setEditing(true) }}>
           {t('card.editIntro')}
         </button>
