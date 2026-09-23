@@ -78,7 +78,23 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
   ordering are preserved and the exported Markdown is byte-identical when nothing is edited.
 - `src/generated/` is auto-generated and **gitignored** — it never commits your private docs.
 
+## Sponsor
+
+repoDocs is free and MIT-licensed. If it saves your team time, a small recurring contribution
+directly funds the [`funded`](https://github.com/alecerca/repoDocs/labels/funded) roadmap items
+([GitHub integration](https://github.com/alecerca/repoDocs/issues/4),
+[canvas export](https://github.com/alecerca/repoDocs/issues/5),
+[plugin system](https://github.com/alecerca/repoDocs/issues/6)).
+
+| Tier          | Price   | What you get                                                     |
+| ------------- | ------- | ---------------------------------------------------------------- |
+| ☕ **Coffee**   | $3/mo   | Vote on roadmap priorities                                       |
+| 🚀 **Supporter** | $8/mo   | Prioritized issue requests                                       |
+| 🏢 **Studio**   | $20/mo  | Office/team support and onboarding                               |
+
+[![Sponsor](https://img.shields.io/badge/-Sponsor-1a1e27?style=flat-square&logo=GitHub-Sponsors&logoColor=EA4AAA)](https://github.com/sponsors/alecerca)
+See [SPONSORING.md](SPONSORING.md) for details.
+
 ## License
 
-[MIT](LICENSE) © 2026 [Alejandro Guerrero](https://github.com/alecerca). Support the
-project via GitHub Sponsors (see [FUNDING.yml](.github/FUNDING.yml)).
+[MIT](LICENSE) © 2026 [Alejandro Guerrero](https://github.com/alecerca).
