@@ -1,19 +1,8 @@
 #!/usr/bin/env node
-/**
- * sync-docs.mjs
- *
- * Escanea los proyectos indicados en mdboard.json (+ mdboard.local.json), lee
- * los *.md de la raíz de cada proyecto (AGENTS.md, recomendaciones.md, README.md,
- * CLAUDE.md, etc.) y genera:
- *   - src/generated/docs.ts   → estructura de docs/secciones
- *   - src/generated/appconfig.ts → status, brands y apps (para el front-end)
- *
- * Lo corre el propio npm dev/build (predev/prebuild). También se puede ejecutar
- * a mano con `npm run sync` para refrescar tras tocar un .md.
- */
 import { readdirSync, readFileSync, writeFileSync, statSync, mkdirSync } from 'node:fs'
 import { join, basename, extname } from 'node:path'
 import { loadConfig } from './config.mjs'
+import { loadPlugins } from './plugins.mjs'
 
 const cfg = loadConfig()
 const PROYECTOS_DIR = cfg.projectsAbs
@@ -32,10 +21,22 @@ const STATUS_PATTERNS = cfg.status.map((s) => ({
   re: new RegExp(`${escapeRe(s.emoji)}|${s.hint ?? ''}`, 'i'),
 }))
 
+/**
+ * Escapes regular expression special characters.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
 function escapeRe(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+/**
+ * Detects status indicators based on configured status emojis and hints.
+ *
+ * @param {string} text
+ * @returns {Array<{ key: string }>}
+ */
 function detectStatus(text) {
   const counts = {}
   for (const s of STATUS_PATTERNS) counts[s.key] = 0
@@ -50,6 +51,13 @@ function detectStatus(text) {
     .map((k) => ({ key: k }))
 }
 
+/**
+ * Converts a section heading or raw snippet into a URL-friendly slug.
+ *
+ * @param {string} str
+ * @param {number} idx
+ * @returns {string}
+ */
 function slugify(str, idx) {
   const base = str
     .toLowerCase()
@@ -61,10 +69,24 @@ function slugify(str, idx) {
   return `${base || 'seccion'}-${idx}`
 }
 
+/**
+ * Normalizes a table cell by stripping formatting.
+ *
+ * @param {string} cell
+ * @returns {string}
+ */
 function normalizeCell(cell) {
   return cell.toLowerCase().replace(/[*`]/g, '').trim()
 }
 
+/**
+ * Parses markdown table rows between line indices.
+ *
+ * @param {string[]} lines
+ * @param {number} startLine
+ * @param {number} endLine
+ * @returns {string[][]}
+ */
 function parseTable(lines, startLine, endLine) {
   const rows = []
   for (let i = startLine; i <= endLine; i++) {
@@ -78,8 +100,10 @@ function parseTable(lines, startLine, endLine) {
 }
 
 /**
- * Busca la "summary table" del doc: primera tabla cuyo header sea
- * #/num, tema y estado. Devuelve {startLine, endLine, entries}.
+ * Finds and parses the default summary table in a document.
+ *
+ * @param {string[]} lines
+ * @returns {{ startLine: number, endLine: number, entries: Array<{ num: string, tema: string, estado: string }> } | null}
  */
 function findSummaryTable(lines) {
   for (let i = 0; i < lines.length; i++) {
@@ -109,17 +133,43 @@ function findSummaryTable(lines) {
   return null
 }
 
-function parseDoc(filePath, projectName) {
+/**
+ * Parses a markdown document, invoking plugin hooks for custom importing and metadata extraction.
+ *
+ * @param {string} filePath
+ * @param {string} projectName
+ * @param {import('./plugins.mjs').PluginManager} pluginManager
+ * @returns {Object}
+ */
+function parseDoc(filePath, projectName, pluginManager) {
   const raw = readFileSync(filePath, 'utf8')
-  const lines = raw.split('\n')
+  const file = basename(filePath)
+  const context = { filePath, projectName, file, raw, config: cfg, extra: {} }
 
-  const titleMatch = raw.match(/^#\s+(.+)$/m)
-  const title = titleMatch ? titleMatch[1].trim() : basename(filePath, extname(filePath))
+  const beforeResult = pluginManager.runBeforeParse(context)
+  const parsedRaw = beforeResult.raw
+  context.extra = beforeResult.extra
 
-  const subMatch = raw.match(/^#\s+.+\n+(>.*(?:\n>.*)*)/)
-  const subtitle = subMatch ? subMatch[1].trim().replace(/^>\s?/gm, '') : ''
+  const lines = parsedRaw.split('\n')
 
-  const summary = findSummaryTable(lines)
+  const defaultTitleMatch = parsedRaw.match(/^#\s+(.+)$/m)
+  const defaultTitle = defaultTitleMatch ? defaultTitleMatch[1].trim() : basename(filePath, extname(filePath))
+
+  const defaultSubMatch = parsedRaw.match(/^#\s+.+\n+(>.*(?:\n>.*)*)/)
+  const defaultSubtitle = defaultSubMatch ? defaultSubMatch[1].trim().replace(/^>\s?/gm, '') : ''
+
+  const customTitle = pluginManager.runParseTitle({
+    ...context,
+    lines,
+    title: defaultTitle,
+    subtitle: defaultSubtitle,
+  })
+
+  const title = customTitle?.title ?? defaultTitle
+  const subtitle = customTitle?.subtitle ?? defaultSubtitle
+
+  const customSummary = pluginManager.runParseSummaryTable({ ...context, lines })
+  const summary = customSummary ?? findSummaryTable(lines)
 
   const sections = []
   let current = null
@@ -128,7 +178,10 @@ function parseDoc(filePath, projectName) {
   const flush = (heading, start, end, headingLevel) => {
     const rawBlock = lines.slice(start, end + 1).join('\n')
     if (!rawBlock.trim()) return
-    const statuses = detectStatus(rawBlock).map((s) => s.key)
+
+    const customStatus = pluginManager.runDetectStatus({ ...context, text: rawBlock })
+    const statuses = (customStatus ?? detectStatus(rawBlock)).map((s) => s.key ?? s)
+
     sections.push({
       id: slugify(heading || rawBlock.slice(0, 60), sections.length),
       heading: heading ? heading.trim() : null,
@@ -141,17 +194,23 @@ function parseDoc(filePath, projectName) {
     })
   }
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (/^#{2}\s/.test(line)) {
-      if (firstH2 === -1) {
-        firstH2 = i
+  const customSections = pluginManager.runParseSections({ ...context, lines })
+
+  if (Array.isArray(customSections)) {
+    sections.push(...customSections)
+  } else {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      if (/^#{2}\s/.test(line)) {
+        if (firstH2 === -1) {
+          firstH2 = i
+        }
+        if (current) flush(current.heading, current.start, i - 1, current.level)
+        current = { heading: line.replace(/^#{2}\s+/, ''), start: i, level: 2 }
       }
-      if (current) flush(current.heading, current.start, i - 1, current.level)
-      current = { heading: line.replace(/^#{2}\s+/, ''), start: i, level: 2 }
     }
+    if (current) flush(current.heading, current.start, lines.length - 1, current.level)
   }
-  if (current) flush(current.heading, current.start, lines.length - 1, current.level)
 
   let introRaw = lines.slice(0, firstH2 === -1 ? lines.length : firstH2).join('\n').replace(/^\n+/, '')
 
@@ -176,7 +235,7 @@ function parseDoc(filePath, projectName) {
     if (s.status) statusCounts[s.status]++
   }
 
-  return {
+  const baseDoc = {
     file: basename(filePath),
     path: filePath,
     project: projectName,
@@ -186,14 +245,25 @@ function parseDoc(filePath, projectName) {
     intro: introRaw,
     introEndLine: firstH2 === -1 ? lines.length - 1 : firstH2 - 1,
     sections,
-    summary: summary ? { entries: summary.entries } : null,
+    summary: summary ? { entries: summary.entries, headers: summary.headers } : null,
     statusCounts,
     sha: hash(raw),
-    lines: lines.length,
+    lines: raw.split('\n').length,
     bytes: raw.length,
+    ...(context.extra.frontmatter ? { frontmatter: context.extra.frontmatter } : {}),
+    ...(context.extra.metadata ? { metadata: context.extra.metadata } : {}),
+    ...(context.extra._frontmatterRaw ? { _frontmatterRaw: context.extra._frontmatterRaw } : {}),
   }
+
+  return pluginManager.runAfterParse({ ...context, doc: baseDoc })
 }
 
+/**
+ * Computes a fast string hash code.
+ *
+ * @param {string} str
+ * @returns {string}
+ */
 function hash(str) {
   let h = 0x811c9dc5
   for (let i = 0; i < str.length; i++) {
@@ -203,7 +273,13 @@ function hash(str) {
   return (h >>> 0).toString(16)
 }
 
-function collect() {
+/**
+ * Collects and parses all markdown files across configured project directories.
+ *
+ * @param {import('./plugins.mjs').PluginManager} pluginManager
+ * @returns {Promise<{ projects: number, docs: Array<Object> }>}
+ */
+async function collect(pluginManager) {
   const projects = readdirSync(PROYECTOS_DIR)
     .filter((name) => {
       if (SKIP.has(name) || name.startsWith('.')) return false
@@ -225,13 +301,20 @@ function collect() {
   const docs = []
   for (const p of projects) {
     for (const md of p.mds) {
-      docs.push(parseDoc(join(p.dir, md), p.name))
+      docs.push(parseDoc(join(p.dir, md), p.name, pluginManager))
     }
   }
   docs.sort((a, b) => a.project.localeCompare(b.project) || a.file.localeCompare(b.file))
   return { projects: projects.length, docs }
 }
 
+/**
+ * Emits the generated docs.ts source file.
+ *
+ * @param {Array<Object>} docs
+ * @param {number} projectsCount
+ * @returns {void}
+ */
 function writeDocs(docs, projectsCount) {
   const generatedAt = new Date().toISOString()
   const code =
@@ -241,7 +324,7 @@ function writeDocs(docs, projectsCount) {
     `export interface DocSummaryEntry {\n  num: string\n  tema: string\n  estado: string\n}\n\n` +
     `export type DocStatus = 'done' | 'pending' | 'progress'\n\n` +
     `export interface DocSection {\n  id: string\n  heading: string | null\n  level: number\n  kind: 'section' | 'chunk' | 'summary'\n  raw: string\n  startLine: number\n  endLine: number\n  status: DocStatus | null\n}\n\n` +
-    `export interface Doc {\n  file: string\n  path: string\n  project: string\n  title: string\n  subtitle: string\n  raw: string\n  intro: string\n  introEndLine: number\n  sections: DocSection[]\n  summary: { entries: DocSummaryEntry[] } | null\n  statusCounts: Record<DocStatus, number>\n  sha: string\n  lines: number\n  bytes: number\n}\n\n` +
+    `export interface Doc {\n  file: string\n  path: string\n  project: string\n  title: string\n  subtitle: string\n  raw: string\n  intro: string\n  introEndLine: number\n  sections: DocSection[]\n  summary: { entries: DocSummaryEntry[]; headers?: string[] } | null\n  statusCounts: Record<DocStatus, number>\n  sha: string\n  lines: number\n  bytes: number\n  frontmatter?: Record<string, unknown>\n  metadata?: Record<string, unknown>\n  _frontmatterRaw?: string\n}\n\n` +
     `export const DOCS: Doc[] = ${JSON.stringify(docs, null, 2)}\n`
   mkdirSync(OUT_DIR, { recursive: true })
   writeFileSync(OUT_FILE, code, 'utf8')
@@ -249,6 +332,11 @@ function writeDocs(docs, projectsCount) {
   console.log(`[sync-docs] ${docs.length} docs en ${projectsCount} proyectos (${totalSections} secciones) → ${OUT_FILE}`)
 }
 
+/**
+ * Emits the generated appconfig.ts source file.
+ *
+ * @returns {void}
+ */
 function writeAppConfig() {
   const generatedAt = new Date().toISOString()
   const statusMeta = cfg.status.map((s) => ({
@@ -274,11 +362,17 @@ function writeAppConfig() {
   writeFileSync(APPCONFIG_FILE, code, 'utf8')
 }
 
-function main() {
-  const { projects, docs } = collect()
+/**
+ * Main entrypoint for sync-docs.
+ *
+ * @returns {Promise<void>}
+ */
+async function main() {
+  const pluginManager = await loadPlugins(cfg)
+  const { projects, docs } = await collect(pluginManager)
   writeDocs(docs, projects)
   writeAppConfig()
   console.log(`[sync-docs] appconfig → ${APPCONFIG_FILE}`)
 }
 
-main()
+await main()

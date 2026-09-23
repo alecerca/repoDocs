@@ -76,6 +76,7 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
 | `npm run dev`      | Vite dev server (runs sync first)                                  |
 | `npm run build`    | `tsc -b && vite build` (runs sync first)                           |
 | `npm run lint`     | oxlint                                                             |
+| `npm test`         | Run unit tests (Node test runner)                                  |
 | `npm run smoke`    | E2E smoke test (spawns its own preview on :5199, writes disabled)  |
 
 ## How it works
@@ -83,6 +84,8 @@ cp mdboard.json mdboard.local.json   # then edit (mdboard.local.json is gitignor
 - `scripts/sync-docs.mjs` parses each `.md` into sections (H1/H2 blocks), detects **status**
   from the config emojis and the **summary table** (kept as a special `summary` section that is
   regenerated on export rather than edited).
+- An extensible **plugin system** (`scripts/plugins/*.mjs`) allows custom importers and emitters
+  for YAML frontmatter, non-standard tables, and markdown dialects. See [PLUGINS.md](docs/PLUGINS.md).
 - Edits are stored **per line range** (`src/lib/registry.ts` `assembleRaw()`), so separators and
   ordering are preserved and the exported Markdown is byte-identical when nothing is edited.
 - `src/generated/` is auto-generated and **gitignored** — it never commits your private docs.
