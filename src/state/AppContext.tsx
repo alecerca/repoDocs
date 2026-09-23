@@ -30,6 +30,7 @@ type PersistState = {
   lastDoc: string
   search: string
   statusFilter: StatusFilter
+  readMode: boolean
 }
 
 const UI_KEY = 'pb:ui'
@@ -61,6 +62,7 @@ const DEFAULT_UI: PersistState = {
   lastDoc: '',
   search: '',
   statusFilter: 'all',
+  readMode: false,
 }
 
 function pickDoc(projectName: string, docName: string): { project: string; docName: string } {
@@ -113,6 +115,8 @@ type Ctx = {
   setPreviewOpen: (b: boolean) => void
   collapsedCmd: boolean | null
   collapseAll: (c: boolean) => void
+  readMode: boolean
+  setReadMode: (b: boolean) => void
   statusCounts: { done: number; pending: number; progress: number }
 }
 
@@ -300,6 +304,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPreviewOpen,
     collapsedCmd,
     collapseAll: setCollapsedCmd,
+    readMode: ui.readMode,
+    setReadMode: (b) => patchUi({ readMode: b }),
     statusCounts,
   }
 

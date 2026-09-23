@@ -23,6 +23,8 @@ export function TopBar() {
     statusCounts,
     fontScale,
     setFontScale,
+    readMode,
+    setReadMode,
     theme,
     toggleTheme,
     previewOpen,
@@ -115,6 +117,16 @@ export function TopBar() {
           <span>{fontScale}%</span>
           <button className="btn-icon" onClick={() => setFontScale(fontScale + 10)}>A+</button>
         </div>
+
+        <button
+          type="button"
+          className={`btn-icon${readMode ? ' on' : ''}`}
+          onClick={() => setReadMode(!readMode)}
+          title={t('readmode.title')}
+          aria-label={t('readmode.title')}
+        >
+          {readMode ? '👓' : '📖'}
+        </button>
 
         <div className="lang-toggle" title={t('lang.title')}>
           <button

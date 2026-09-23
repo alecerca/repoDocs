@@ -12,6 +12,7 @@ const DICT: Record<string, { en: string; es: string }> = {
   'view.canvas': { en: '◧ Canvas', es: '◧ Canvas' },
   'view.board.title': { en: 'Board view', es: 'Vista tablero' },
   'view.canvas.title': { en: 'Figma-like canvas', es: 'Canvas estilo Figma' },
+  'readmode.title': { en: 'Focus / reading mode', es: 'Modo lectura / foco' },
   'font.title': { en: 'Font size', es: 'Tamaño de letra' },
   'lang.title': { en: 'Language: Español', es: 'Language: English' },
   // topbar actions

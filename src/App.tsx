@@ -36,13 +36,14 @@ function ToastHost() {
 }
 
 function Shell() {
-  const { view, fontScale, theme, lang, setView } = useApp()
+  const { view, fontScale, theme, lang, setView, readMode } = useApp()
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${Math.round(16 * (fontScale / 100))}px`
     document.documentElement.dataset.theme = theme
     document.documentElement.lang = lang
-  }, [fontScale, theme, lang])
+    document.body.classList.toggle('read-mode', readMode)
+  }, [fontScale, theme, lang, readMode])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
