@@ -8,7 +8,7 @@ import { toast } from '../lib/toast'
 // ---------- BOARD ----------
 
 export function BoardView() {
-  const { current, edits, writeSection, search, statusFilter, t } = useApp()
+  const { current, edits, writeSection, search, statusFilter, collapseAll, t } = useApp()
 
   const filtered = useMemo(() => {
     if (!current) return []
@@ -31,6 +31,17 @@ export function BoardView() {
 
   return (
     <div className="board">
+      <div className="board-toolbar">
+        <span className="board-hint">{t('board.hint')}</span>
+        <div>
+          <button type="button" className="btn ghost xs" onClick={() => collapseAll(true)}>
+            {t('board.collapseAll')}
+          </button>
+          <button type="button" className="btn ghost xs" onClick={() => collapseAll(false)}>
+            {t('board.expandAll')}
+          </button>
+        </div>
+      </div>
       <IntroCard doc={current} edits={edits} baseKey={baseKey} writeSection={writeSection} />
       <SummaryCard doc={current} />
       {filtered.map((section) => (

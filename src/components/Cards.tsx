@@ -177,13 +177,17 @@ export function SectionCard({
   baseKey: string
   writeSection: (baseKey: string, key: string, raw: string) => void
 }) {
-  const { t, setEdits } = useApp()
+  const { t, setEdits, collapsedCmd } = useApp()
   const key = sectionKey(baseKey, section.id)
   const raw = edits[key] ?? section.raw
   const edited = key in edits
   const [collapsed, setCollapsed] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+
+  useEffect(() => {
+    if (collapsedCmd !== null) setCollapsed(collapsedCmd)
+  }, [collapsedCmd])
 
   const startEdit = () => {
     setDraft(raw)

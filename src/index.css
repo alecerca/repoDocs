@@ -998,6 +998,21 @@ button {
   background: var(--surface2);
 }
 
+/* ============ Board ============ */
+
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.board-hint {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
 /* ============ Editor inline ============ */
 
 .editor {

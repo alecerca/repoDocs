@@ -111,6 +111,8 @@ type Ctx = {
   setSelected: (id: string | null) => void
   previewOpen: boolean
   setPreviewOpen: (b: boolean) => void
+  collapsedCmd: boolean | null
+  collapseAll: (c: boolean) => void
   statusCounts: { done: number; pending: number; progress: number }
 }
 
@@ -125,6 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [canvas, setCanvasState] = useState<CanvasMap>(() => load(CANVAS_KEY, {}))
   const [selected, setSelected] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [collapsedCmd, setCollapsedCmd] = useState<boolean | null>(null)
 
   const { activeProject, activeDoc } = (() => {
     const picked = pickDoc(ui.lastProject, ui.lastDoc)
@@ -295,6 +298,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelected,
     previewOpen,
     setPreviewOpen,
+    collapsedCmd,
+    collapseAll: setCollapsedCmd,
     statusCounts,
   }
 

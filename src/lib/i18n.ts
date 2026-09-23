@@ -76,6 +76,9 @@ const DICT: Record<string, { en: string; es: string }> = {
   'card.lines': { en: '{n} lines', es: '{n} líneas' },
   'card.items': { en: '{n} items', es: '{n} ítems' },
   'summary.title': { en: 'Status summary', es: 'Resumen de estado' },
+  'board.collapseAll': { en: 'Collapse all', es: 'Colapsar todo' },
+  'board.expandAll': { en: 'Expand all', es: 'Expandir todo' },
+  'board.hint': { en: 'Double-click a header to collapse · ⌘K search', es: 'Doble clic en el título: colapsar · ⌘K buscar' },
   // empty / canvas
   'empty.selectDoc': { en: 'Pick a document from the left menu.', es: 'Cargá un documento desde el menú izquierdo.' },
   'empty.noSearch': { en: 'No sections match "{q}".', es: 'No hay secciones que matcheen "{q}".' },
