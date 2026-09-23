@@ -1,6 +1,6 @@
 {
   "name": "repodocs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "sync": "node scripts/sync-docs.mjs",
