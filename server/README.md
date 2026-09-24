@@ -26,6 +26,7 @@ El bundle de repoDocs valida ese token **offline** con la clave pública embebid
 | `ADRP_PRIVATE_KEY_HEX` | sí | Clave Ed25519 **privada** en hex (**nunca** en el repo) |
 | `ADRP_PRODUCT_IDS` | salvo GitHub | Ids de producto (Gumroad = permalink; LS = product_id numérico). GitHub no la usa |
 | `ADRP_GITHUB_TIER_IDS` | no | Tiers de Sponsors (node_id) que emiten premium; vacío = todos |
+| `ADRP_GITHUB_MIN_CENTS` | no | Mínimo del precio mensual del tier (centavos) para emitir; `2000` = solo $20/mes o más |
 | `ADRP_GITHUB_SECRET` / `ADRP_GUMROAD_SECRET` / `ADRP_LEMONSQUEEZY_SECRET` | no | Secretos por plataforma; si faltan se usa `ADRP_WEBHOOK_SECRET` |
 | `ADRP_SEATS` | no | Asientos por licencia (default `1`) |
 | `ADRP_ACCEPT_TEST` | no | `1` para emitir también en compras de prueba |
@@ -70,10 +71,11 @@ paso manual, y se hace una sola vez:
 
 Cuando llegue el primer `sponsorship.created`, GitHub firma el body con
 `X-Hub-Signature-256: sha256=<hmac hex>` del mismo secreto (`ADRP_GITHUB_SECRET`
-o fallback `ADRP_WEBHOOK_SECRET`), y por defecto **cualquier tier emite la
-licencia** (podés restringir con `ADRP_GITHUB_TIER_IDS` = node_ids de tiers).
-Como el email del sponsor no viaja en el payload, se usa su login
-(`<login>@users.noreply.github.com`) salvo que lo haga público.
+o fallback `ADRP_WEBHOOK_SECRET`). Por defecto **cualquier tier emite la
+licencia**; para que solo un tier (o desde cierto precio) habilite premium, usá
+`ADRP_GITHUB_TIER_IDS` (node_ids) o `ADRP_GITHUB_MIN_CENTS` (ej. `2000` = solo
+$20/mes o más en adelante). Como el email del sponsor no viaja en el payload, se
+usa su login (`<login>@users.noreply.github.com`) salvo que lo haga público.
 
 ## Deploy con Vercel
 

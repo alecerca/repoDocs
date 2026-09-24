@@ -242,6 +242,34 @@ test('github tier allow-list limits which tiers unlock premium', async () => {
   assert.equal(await verifyEd25519(out2.json.license, pub), true)
 })
 
+function tierPayload(tier) {
+  return githubSponsorship({
+    sponsor: { id: 7, login: 'sponsor-7', email: 'sponsor@example.com' },
+    tier,
+  })
+}
+
+test('github honors ADRP_GITHUB_MIN_CENTS (only $20/mo tier unlocks)', async () => {
+  const { env } = await envWithKeys({ ADRP_GITHUB_MIN_CENTS: '2000' })
+  const small = tierPayload({
+    node_id: 'tier-5', name: 'Coffee', monthly_price_in_cents: 500, monthly_price_in_dollars: 5, is_one_time: false,
+  })
+  const sigSmall = `sha256=${await hmacSha256Hex(small, SECRET)}`
+  const outLow = await handleWebhook({ rawBody: small, headers: { 'x-hub-signature-256': sigSmall }, env })
+  assert.equal(outLow.status, 200)
+  assert.equal(outLow.json.ignored, 'github-tier-below-min')
+  assert.equal('license' in outLow.json, false)
+
+  const twenty = tierPayload({
+    node_id: 'tier-2000', name: 'Supporter', monthly_price_in_cents: 2000, monthly_price_in_dollars: 20, is_one_time: false,
+  })
+  const sig20 = `sha256=${await hmacSha256Hex(twenty, SECRET)}`
+  const { pub, env: env2 } = await envWithKeys({ ADRP_GITHUB_MIN_CENTS: '2000' })
+  const out20 = await handleWebhook({ rawBody: twenty, headers: { 'x-hub-signature-256': sig20 }, env: env2 })
+  assert.equal(out20.json.ok, true)
+  assert.equal(await verifyEd25519(out20.json.license, pub), true)
+})
+
 test('github ping event → acknowledged', async () => {
   const out = await handleWebhook({
     rawBody: JSON.stringify({ zen: 'Keep it logically awesome.', hook_id: 1 }),

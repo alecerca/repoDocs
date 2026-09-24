@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ADR Premium webhook — GitHub Sponsors**: the webhook now also classifies GitHub Sponsors payloads
   (`sponsorship.created`) verifying the standard `X-Hub-Signature-256: sha256=<hmac>` (same secret as
-  the others, or `ADRP_GITHUB_SECRET`). Any sponsored tier emits a license (optionally restricted via
-  `ADRP_GITHUB_TIER_IDS` with the tier `node_id`); the sponsor reach-out email defaults to
-  `<login>@users.noreply.github.com` when private. Tests added in `test/adr-webhook.test.mjs`
-  (55/55 total across the suite).
+  the others, or `ADRP_GITHUB_SECRET`). Any sponsored tier emits a license, optionally gated to only
+  tiers whose monthly price reaches `ADRP_GITHUB_MIN_CENTS` (e.g. `2000` = $20/mo and up) or a specific
+  set via `ADRP_GITHUB_TIER_IDS` (tier `node_id`); the sponsor reach-out email defaults to
+  `<login>@users.noreply.github.com` when private, and GitHub's `ping` probe is answered `200`.
+  Tests added in `test/adr-webhook.test.mjs` (57/57 total across the suite).
 - **ADR front-matter `toml/json`**: `scripts/sync-adr.mjs` now parses front-matter in **YAML** (`---`),
   **JSON** (`;;;`) and **TOML** (`+++`) with gray-matter engines (`toml` added). Covers multis in
   `examples`, copy-in your own ADRs written with any of the three formats (`status`, `date`,

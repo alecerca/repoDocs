@@ -11,6 +11,7 @@
  *   ADRP_WEBHOOK_SECRET / ADRP_GUMROAD_SECRET / ADRP_LEMONSQUEEZY_SECRET / ADRP_GITHUB_SECRET — secreto webhook
  *   ADRP_PRODUCT_IDS          — ids de producto permitidos (separados por coma; LS usa el product_id numérico)
  *   ADRP_GITHUB_TIER_IDS      — opcional: node_ids de tiers de Sponsors que habilitan premium (vacío = todos)
+ *   ADRP_GITHUB_MIN_CENTS     — opcional: mínimo de precio mensual del tier (ej. 2000 = solo $20+)
  *   ADRP_PRIVATE_KEY_HEX      — clave Ed25519 PRIVADA (hex). NUNCA en el repo.
  *   ADRP_SEATS                — asientos por licencia (default 1)
  *   ADRP_ACCEPT_TEST=1        — emite también con compras en modo test
@@ -85,6 +86,7 @@ export function classify(rawBody, headers) {
         refunded: false,
         recurrence: tier.is_one_time === true ? 'one_time' : 'monthly',
         test_mode: false,
+        tier_cents: tier.monthly_price_in_cents ?? null,
       },
     }
   }
@@ -169,6 +171,10 @@ export async function handleWebhook({ rawBody, headers = {}, env = {} }) {
     const tiers = (env.ADRP_GITHUB_TIER_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
     if (tiers.length > 0 && !tiers.includes(String(order.product_id))) {
       return { status: 200, json: { ok: false, ignored: 'github-tier-not-matching', tier: order.product_id } }
+    }
+    const minCents = Number(env.ADRP_GITHUB_MIN_CENTS ?? 0)
+    if (Number.isFinite(minCents) && minCents > 0 && !(Number(order.tier_cents) >= minCents)) {
+      return { status: 200, json: { ok: false, ignored: 'github-tier-below-min', tier_cents: order.tier_cents, min_cents: minCents } }
     }
   } else {
     const allow = (env.ADRP_PRODUCT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
