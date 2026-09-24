@@ -1,16 +1,17 @@
 /**
  * Vercel serverless function — POST /api/webhook
- * (desplegada automáticamente por Vercel desde la carpeta api/ con preset Vite)
+ * Detectada automáticamente por Vercel desde la carpeta api/ (Node runtime, Web Signature).
  */
 import { handleWebhook } from '../server/webhook-core.mjs'
 
-export default async function handler(req, res) {
-  const chunks = []
-  for await (const c of req) chunks.push(c)
-  const rawBody = Buffer.concat(chunks).toString('utf8')
-  const headers = Object.fromEntries(
-    Object.entries(req.headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]),
-  )
-  const out = await handleWebhook({ rawBody, headers, env: process.env })
-  res.status(out.status).json(out.json)
+export default {
+  async fetch(request) {
+    const rawBody = await request.text()
+    const headers = Object.fromEntries(request.headers.entries())
+    const out = await handleWebhook({ rawBody, headers, env: process.env })
+    return new Response(JSON.stringify(out.json), {
+      status: out.status,
+      headers: { 'content-type': 'application/json' },
+    })
+  },
 }
