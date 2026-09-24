@@ -59,6 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       on load. The graph view falls back to the free limited list when unlicensed.
     - Tests in `test/adr-license.test.mjs` cover token decoding, a valid fixture token signed with the
       real key, tampering, wrong-issuer signatures and the tool round-trip with ephemeral keys.
+  - **ADR Premium — phase 4½ (license webhook)**: a serverless function (Vercel `api/webhook.mjs`
+    or Cloudflare Worker `server/webhook-worker.mjs`) that sells access to the premium graph:
+    - `server/webhook-core.mjs` classifies **Gumroad** (`sale`) and **Lemon Squeezy**
+      (JSON:API `order_created`) webhooks, verifies the HMAC-SHA256 signature against the **raw**
+      body (`X-Gumroad-Signature` / `X-Signature`), filters product / refunds / test-mode, and signs
+      a license token with the Ed25519 private key.
+    - `server/sign.mjs` is a runtime-agnostic forge (WebCrypto + `@noble/ed25519`, no Buffer/fs) so the
+      same token format (`base64url(payload).base64url(sig)`) is produced by the CLI tool, the webhook
+      and validated by the bundle.
+    - email delivery of the token is optional via **Resend** (`ADRP_RESEND_KEY` / `ADRP_RESEND_FROM`);
+      without it the token returns in the webhook JSON body (handy for Gumroad's test button).
+    - local listener for platform test buttons: `npm run webhook:local` (`:8787`); deploy/ENV docs in
+      `server/README.md` + `server/.env.example`. Tests in `test/adr-webhook.test.mjs` (10 new).
 
 ## [0.1.0] - 2026-09-23
 

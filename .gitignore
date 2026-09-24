@@ -15,6 +15,9 @@ dist-ssr
 # Config local (se arma mdboard.generated a partir de esto)
 mdboard.local.json
 
+# Secrets del webhook serverless
+server/.env
+
 # Archivos auto-generados por scripts/sync-docs.mjs
 src/generated/
 
