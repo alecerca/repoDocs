@@ -2098,7 +2098,12 @@ button.chip.on {
 
 /* ADR Premium license */
 
-.adr-board { position: relative; }
+.adr-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
 
 .adr-premium-badge {
   font-size: 9px;
