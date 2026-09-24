@@ -5,6 +5,7 @@ import { newSectionDefaults } from './canvasLayout'
 import { IntroCard, SummaryCard, SectionCard, EmptyState, Markdown, cleanHeading } from './Cards'
 import { DecisionCard } from './adr/DecisionCard'
 import { DecisionGraph } from './adr/DecisionGraph'
+import { MermaidExport } from './adr/MermaidExport'
 import { ADRS_ALL, adrsByProject, supersededByMap } from '../lib/adrs'
 import { toast } from '../lib/toast'
 
@@ -322,6 +323,9 @@ export function DecisionsView() {
                 <span className="adr-project-dot">{project.slice(0, 1)}</span>
                 {project}
                 <span className="lno">{adrs.length}</span>
+                <span className="adr-group-actions">
+                  <MermaidExport records={adrs} />
+                </span>
               </h2>
               {adrs.map((rec) => (
                 <DecisionCard key={rec.id} rec={rec} supersededBy={supMap[rec.id]} />

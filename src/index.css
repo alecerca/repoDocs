@@ -2089,3 +2089,9 @@ button.chip.on {
   color: var(--muted);
   pointer-events: none;
 }
+
+.adr-group-actions {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 6px;
+}

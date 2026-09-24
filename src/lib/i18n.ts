@@ -159,6 +159,21 @@ const DICT: Record<string, { en: string; es: string }> = {
     en: '∞ drag nodes · drag background to pan · wheel to zoom · click a node to highlight its edges',
     es: '∞ arrastrá nodos · fondo para moverte · rueda para zoom · click en un nodo resalta sus flechas',
   },
+  'adr.mmd.copy': { en: '⧉ Copy .mmd', es: '⧉ Copiar .mmd' },
+  'adr.mmd.copy.title': {
+    en: 'Copy a Mermaid flowchart of these ADRs (paste in a README / mermaid.live)',
+    es: 'Copiá un flowchart Mermaid de estos ADRs (pegá en un README / mermaid.live)',
+  },
+  'adr.mmd.down': { en: '⇣ .mmd', es: '⇣ .mmd' },
+  'adr.mmd.down.title': {
+    en: 'Download as repoDocs adr-graph .mmd',
+    es: 'Descargar como graph de ADRs .mmd',
+  },
+  'toast.mmdCopied': {
+    en: 'Mermaid copied to clipboard — paste it in a README or mermaid.live',
+    es: 'Mermaid copiado al portapapeles — pegálo en un README o mermaid.live',
+  },
+  'toast.mmdDownloaded': { en: '.mmd downloaded', es: '.mmd descargado' },
 }
 
 export function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {

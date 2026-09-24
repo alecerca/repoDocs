@@ -4,6 +4,7 @@ import { buildGraph, layeredLayout, supersededByMap, type GraphEdge } from '../.
 import { adrStatus } from '../../lib/adrs'
 import { cleanHeading } from '../Cards'
 import { useApp } from '../../state/AppContext'
+import { MermaidExport } from './MermaidExport'
 
 const STEP = 16
 const NODE_W = 240
@@ -177,6 +178,7 @@ export function DecisionGraph({ adrs, project }: { adrs: AdrRecord[]; project: s
         <span className="zoom-label">{Math.round(transform.scale * 100)}%</span>
         <button className="btn ghost xs" onClick={() => setTransform((tm) => ({ ...tm, scale: Math.max(0.3, +(tm.scale - 0.1).toFixed(2)) }))}>−</button>
         <button className="btn ghost xs" onClick={() => setTransform((tm) => ({ ...tm, scale: Math.min(1.8, +(tm.scale + 0.1).toFixed(2)) }))}>＋</button>
+        <MermaidExport records={adrs} />
       </div>
     </div>
   )

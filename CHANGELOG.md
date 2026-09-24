@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     highlighted.
   - **Demo**: 6 interrelated example ADRs (0001–0006) under `examples/docsboard-demo/docs/adr/`;
     tests in `test/adr.test.mjs` cover parsing, canonical ids, the heuristic and relation resolution.
+  - **Export Mermaid (`.mmd`)**: `toMermaid()` in `src/lib/adrGraph.ts` renders a `flowchart LR`
+    (status emoji + id per node, directed labelled edges). Buyton "⧉ Copy .mmd" / "⇣ .mmd" in the
+    list group headers and the graph toolbar (clipboard with `execCommand` fallback); the demo ships a
+    generated `docsboard-demo.adr.mmd`. `adrGraph.ts` keeps pure graph/layout/export helpers
+    (no runtime imports) so Node tests import it directly (`test/adr-mermaid.test.mjs`).
 
 ## [0.1.0] - 2026-09-23
 
