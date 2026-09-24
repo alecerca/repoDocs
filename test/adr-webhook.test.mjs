@@ -149,6 +149,109 @@ test('lemon squeezy wrong event → ignored', async () => {
   assert.equal(out.json.ignored, 'event:order_refunded')
 })
 
+function githubSponsorship(over = {}, action = 'created') {
+  return JSON.stringify({
+    action,
+    sponsorship: {
+      node_id: 'MDk6U3BvbnNvcnNoaXAzNA==',
+      created_at: '2026-09-24T12:00:00Z',
+      privacy_level: 'public',
+      tier: {
+        node_id: 'tier-node-abc',
+        created_at: '2026-09-24T00:00:00Z',
+        name: 'Supporter',
+        description: 'repoDocs ADR Premium',
+        monthly_price_in_cents: 1900,
+        monthly_price_in_dollars: 19,
+        is_one_time: false,
+        is_custom_amount: false,
+      },
+      sponsor: { id: 1, login: 'dev-sponsor', email: null },
+      sponsorable: { id: 2, login: 'alecerca' },
+      ...over,
+    },
+    sender: { id: 1, login: 'dev-sponsor' },
+  })
+}
+
+test('github sponsorship created → issues a valid token (no user tier allow-list needed)', async () => {
+  const { pub, env } = await envWithKeys()
+  const rawBody = githubSponsorship()
+  const sig = `sha256=${await hmacSha256Hex(rawBody, SECRET)}`
+  const out = await handleWebhook({
+    rawBody,
+    headers: { 'x-hub-signature-256': sig },
+    env,
+  })
+  assert.equal(out.status, 200)
+  assert.equal(out.json.ok, true)
+  assert.equal(out.json.provider, 'github')
+  assert.equal(payloadEmail(out.json.license), 'dev-sponsor@users.noreply.github.com')
+  assert.equal(await verifyEd25519(out.json.license, pub), true)
+})
+
+test('github sponsorship with public email → uses it', async () => {
+  const { env } = await envWithKeys()
+  const rawBody = githubSponsorship({ sponsor: { id: 1, login: 'dev-sponsor', email: 'dev@example.com' } })
+  const sig = `sha256=${await hmacSha256Hex(rawBody, SECRET)}`
+  const out = await handleWebhook({ rawBody, headers: { 'x-hub-signature-256': sig }, env })
+  assert.equal(out.json.ok, true)
+  assert.equal(payloadEmail(out.json.license), 'dev@example.com')
+})
+
+test('github non-created events → ignored', async () => {
+  const { env } = await envWithKeys()
+  const rawBody = githubSponsorship({}, 'cancelled')
+  const sig = `sha256=${await hmacSha256Hex(rawBody, SECRET)}`
+  const out = await handleWebhook({ rawBody, headers: { 'x-hub-signature-256': sig }, env })
+  assert.equal(out.status, 200)
+  assert.equal(out.json.ignored, 'github:cancelled')
+  assert.equal('license' in out.json, false)
+})
+
+test('github bad signature → 401', async () => {
+  const { env } = await envWithKeys()
+  const out = await handleWebhook({
+    rawBody: githubSponsorship(),
+    headers: { 'x-hub-signature-256': 'sha256=deadbeef' },
+    env,
+  })
+  assert.equal(out.status, 401)
+  assert.equal(out.json.error, 'bad-signature')
+})
+
+test('github honors ADRP_GITHUB_SECRET override', async () => {
+  const { pub, env } = await envWithKeys({ ADRP_GITHUB_SECRET: 'github-secret-own' })
+  const rawBody = githubSponsorship()
+  const sig = `sha256=${await hmacSha256Hex(rawBody, 'github-secret-own')}`
+  const out = await handleWebhook({ rawBody, headers: { 'x-hub-signature-256': sig }, env })
+  assert.equal(out.json.ok, true)
+  assert.equal(await verifyEd25519(out.json.license, pub), true)
+})
+
+test('github tier allow-list limits which tiers unlock premium', async () => {
+  const { env } = await envWithKeys({ ADRP_GITHUB_TIER_IDS: 'tier-node-xyz' })
+  const rawBody = githubSponsorship()
+  const sig = `sha256=${await hmacSha256Hex(rawBody, SECRET)}`
+  const out = await handleWebhook({ rawBody, headers: { 'x-hub-signature-256': sig }, env })
+  assert.equal(out.json.ignored, 'github-tier-not-matching')
+
+  const { pub, env: env2 } = await envWithKeys({ ADRP_GITHUB_TIER_IDS: 'tier-node-abc' })
+  const out2 = await handleWebhook({ rawBody, headers: { 'x-hub-signature-256': sig }, env: env2 })
+  assert.equal(out2.json.ok, true)
+  assert.equal(await verifyEd25519(out2.json.license, pub), true)
+})
+
+test('github ping event → acknowledged', async () => {
+  const out = await handleWebhook({
+    rawBody: JSON.stringify({ zen: 'Keep it logically awesome.', hook_id: 1 }),
+    headers: { 'x-github-event': 'ping' },
+    env: {},
+  })
+  assert.equal(out.status, 200)
+  assert.equal(out.json.ignored, 'github:ping')
+})
+
 test('no secret configured → 500', async () => {
   const out = await handleWebhook({ rawBody: gumroadSale(), headers: {}, env: {} })
   assert.equal(out.status, 500)

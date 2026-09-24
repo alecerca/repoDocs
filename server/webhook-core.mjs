@@ -3,13 +3,14 @@
  *
  * Función serverless agnóstica de plataforma: detecta el proveedor por la
  * estructura del payload (Gumroad "sale" | Lemon Squeezy JSON:API con
- * meta.event_name), verifica la firma HMAC-SHA256 contra el body RAW y, si la
- * compra corresponde a tu producto, firma un token Ed25519 (idéntico al que
- * el bundle valida en src/lib/license.ts).
+ * meta.event_name | GitHub Sponsors "sponsorship"), verifica la firma HMAC-SHA256
+ * contra el body RAW y, si la compra corresponde a tu producto, firma un token
+ * Ed25519 (idéntico al que el bundle valida en src/lib/license.ts).
  *
  * Env:
- *   ADRP_WEBHOOK_SECRET / ADRP_GUMROAD_SECRET / ADRP_LEMONSQUEEZY_SECRET — secreto webhook
+ *   ADRP_WEBHOOK_SECRET / ADRP_GUMROAD_SECRET / ADRP_LEMONSQUEEZY_SECRET / ADRP_GITHUB_SECRET — secreto webhook
  *   ADRP_PRODUCT_IDS          — ids de producto permitidos (separados por coma; LS usa el product_id numérico)
+ *   ADRP_GITHUB_TIER_IDS      — opcional: node_ids de tiers de Sponsors que habilitan premium (vacío = todos)
  *   ADRP_PRIVATE_KEY_HEX      — clave Ed25519 PRIVADA (hex). NUNCA en el repo.
  *   ADRP_SEATS                — asientos por licencia (default 1)
  *   ADRP_ACCEPT_TEST=1        — emite también con compras en modo test
@@ -69,23 +70,45 @@ export function classify(rawBody, headers) {
       },
     }
   }
+  if (json && typeof json.sponsorship === 'object' && json.sponsorship !== null && typeof json.action === 'string') {
+    const sp = json.sponsorship
+    const sponsor = sp.sponsor ?? {}
+    const tier = sp.tier ?? {}
+    return {
+      provider: 'github',
+      payload: json,
+      order: {
+        order_id: sp.node_id ?? null,
+        product_id: tier.node_id ?? null,
+        email: sponsor.email ?? (sponsor.login ? `${sponsor.login}@users.noreply.github.com` : null),
+        name: sponsor.name ?? sponsor.login ?? null,
+        refunded: false,
+        recurrence: tier.is_one_time === true ? 'one_time' : 'monthly',
+        test_mode: false,
+      },
+    }
+  }
   return null
 }
 
 function signatureHeader(headers, provider) {
   if (provider === 'gumroad') return headers['x-gumroad-signature'] ?? headers['X-Gumroad-Signature']
+  if (provider === 'github') return headers['x-hub-signature-256'] ?? headers['X-Hub-Signature-256']
   return headers['x-signature'] ?? headers['X-Signature']
 }
 
 async function verifySignature({ rawBody, headers, provider, env }) {
   const secret = pick(env, provider === 'gumroad'
     ? ['ADRP_GUMROAD_SECRET', 'ADRP_WEBHOOK_SECRET']
-    : ['ADRP_LEMONSQUEEZY_SECRET', 'ADRP_WEBHOOK_SECRET'])
+    : provider === 'github'
+      ? ['ADRP_GITHUB_SECRET', 'ADRP_WEBHOOK_SECRET']
+      : ['ADRP_LEMONSQUEEZY_SECRET', 'ADRP_WEBHOOK_SECRET'])
   if (!secret) return null // no configurado
-  const sig = signatureHeader(headers, provider)
+  let sig = signatureHeader(headers, provider)
   if (!sig) return false
+  if (provider === 'github') sig = String(sig).replace(/^sha256[=-]?/i, '')
   const expected = await hmacSha256Hex(rawBody, secret)
-  return timingSafeEqualText(sig.trim(), expected)
+  return timingSafeEqualText(String(sig).trim(), expected)
 }
 
 async function sendResendEmail(env, { to, license }) {
@@ -111,6 +134,12 @@ async function sendResendEmail(env, { to, license }) {
 
 export async function handleWebhook({ rawBody, headers = {}, env = {} }) {
   const raw = typeof rawBody === 'string' ? rawBody : String(rawBody ?? '')
+
+  const ghEvent = headers['x-github-event'] ?? headers['X-GitHub-Event']
+  if (ghEvent === 'ping') {
+    return { status: 200, json: { ok: true, ignored: 'github:ping' } }
+  }
+
   const classified = classify(raw)
   if (!classified) {
     return { status: 400, json: { ok: false, error: 'unrecognized-payload' } }
@@ -132,10 +161,20 @@ export async function handleWebhook({ rawBody, headers = {}, env = {} }) {
   if (provider === 'lemonsqueezy' && body?.meta?.event_name !== 'order_created') {
     return { status: 200, json: { ok: true, ignored: `event:${body.meta.event_name}` } }
   }
+  if (provider === 'github' && body?.action !== 'created') {
+    return { status: 200, json: { ok: true, ignored: `github:${body.action}` } }
+  }
 
-  const allow = (env.ADRP_PRODUCT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
-  if (allow.length > 0 && !allow.includes(String(order.product_id))) {
-    return { status: 200, json: { ok: false, ignored: 'product-not-matching', product_id: order.product_id } }
+  if (provider === 'github') {
+    const tiers = (env.ADRP_GITHUB_TIER_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+    if (tiers.length > 0 && !tiers.includes(String(order.product_id))) {
+      return { status: 200, json: { ok: false, ignored: 'github-tier-not-matching', tier: order.product_id } }
+    }
+  } else {
+    const allow = (env.ADRP_PRODUCT_IDS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+    if (allow.length > 0 && !allow.includes(String(order.product_id))) {
+      return { status: 200, json: { ok: false, ignored: 'product-not-matching', product_id: order.product_id } }
+    }
   }
 
   if (order.test_mode && env.ADRP_ACCEPT_TEST !== '1') {

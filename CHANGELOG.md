@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADR Premium webhook — GitHub Sponsors**: the webhook now also classifies GitHub Sponsors payloads
+  (`sponsorship.created`) verifying the standard `X-Hub-Signature-256: sha256=<hmac>` (same secret as
+  the others, or `ADRP_GITHUB_SECRET`). Any sponsored tier emits a license (optionally restricted via
+  `ADRP_GITHUB_TIER_IDS` with the tier `node_id`); the sponsor reach-out email defaults to
+  `<login>@users.noreply.github.com` when private. Tests added in `test/adr-webhook.test.mjs`
+  (55/55 total across the suite).
 - **ADR front-matter `toml/json`**: `scripts/sync-adr.mjs` now parses front-matter in **YAML** (`---`),
   **JSON** (`;;;`) and **TOML** (`+++`) with gray-matter engines (`toml` added). Covers multis in
   `examples`, copy-in your own ADRs written with any of the three formats (`status`, `date`,
-  `deciders`, relations). Tests added in `test/adr.test.mjs` (49/49 total).
+  `deciders`, relations). Tests added in `test/adr.test.mjs`.
 - **Keyboard shortcuts**: `Ctrl/⌘+K` focuses search, `B` / `C` switch board ↔ canvas, `E` edits the
   focused section (esc is always available to abort).
 - **Formatting toolbar** in the inline editor (bold, italic, strikethrough, inline code, link, lists,
