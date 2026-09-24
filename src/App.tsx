@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AppProvider, useApp } from './state/AppContext'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
-import { BoardView, CanvasView } from './components/Views'
+import { BoardView, CanvasView, DecisionsView } from './components/Views'
 import { PhoneMock } from './components/PhoneMock'
 import { OnboardingTour } from './components/OnboardingTour'
 import { subscribeToast, type ToastMsg } from './lib/toast'
@@ -65,6 +65,10 @@ function Shell() {
         setView('canvas')
         return
       }
+      if (k === 'd') {
+        setView('decisions')
+        return
+      }
       if (k === 'e') {
         const card = target?.closest?.('[data-edit]') as HTMLElement | null
         const ekey = card?.getAttribute('data-edit')
@@ -85,7 +89,9 @@ function Shell() {
       <Sidebar />
       <div className="main">
         <TopBar />
-        <div className="content">{view === 'board' ? <BoardView /> : <CanvasView />}</div>
+        <div className="content">
+          {view === 'board' ? <BoardView /> : view === 'canvas' ? <CanvasView /> : <DecisionsView />}
+        </div>
       </div>
       <ToastHost />
       <PhoneMock />

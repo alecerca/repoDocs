@@ -12,6 +12,8 @@ const DICT: Record<string, { en: string; es: string }> = {
   'view.canvas': { en: '◧ Canvas', es: '◧ Canvas' },
   'view.board.title': { en: 'Board view', es: 'Vista tablero' },
   'view.canvas.title': { en: 'Figma-like canvas', es: 'Canvas estilo Figma' },
+  'view.decisions': { en: '🧭 Decisions', es: '🧭 Decisiones' },
+  'view.decisions.title': { en: 'Architecture decision records (ADR)', es: 'Registros de decisión de arquitectura (ADR)' },
   'readmode.title': { en: 'Focus / reading mode', es: 'Modo lectura / foco' },
   'font.title': { en: 'Font size', es: 'Tamaño de letra' },
   'lang.title': { en: 'Language: Español', es: 'Language: English' },
@@ -138,6 +140,24 @@ const DICT: Record<string, { en: string; es: string }> = {
   'mock.empty': {
     en: 'No preview for {project}. Define it in apps → mdboard config.',
     es: 'Sin preview para {project}. Definilo en apps → mdboard config.',
+  },
+  // ADR / decisions
+  'adr.empty': {
+    en: 'No architecture decision records (ADRs) found. Point `adr.paths` in the mdboard config at your decisions folder.',
+    es: 'No se encontraron registros de decisión (ADR). Apuntá `adr.paths` en la config del mdboard a tu carpeta de decisiones.',
+  },
+  'adr.hint': {
+    en: 'List | Graph · D switches views. Superseded decisions are flagged in context.',
+    es: 'Lista | Grafo · D cambia de vista. Las decisiones reemplazadas se marcan en contexto.',
+  },
+  'adr.list': { en: '☑ List', es: '☑ Lista' },
+  'adr.graph': { en: '🕸 Graph', es: '🕸 Grafo' },
+  'adr.metadata': { en: 'Header · front-matter', es: 'Cabecera · front-matter' },
+  'adr.replacedBy': { en: '↩ replaced by', es: '↩ reemplazada por' },
+  'adr.broken': { en: '⚠ broken ref', es: '⚠ ref rota' },
+  'adr.graph.note': {
+    en: '∞ drag nodes · drag background to pan · wheel to zoom · click a node to highlight its edges',
+    es: '∞ arrastrá nodos · fondo para moverte · rueda para zoom · click en un nodo resalta sus flechas',
   },
 }
 

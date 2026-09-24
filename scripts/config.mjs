@@ -49,6 +49,16 @@ export function loadConfig() {
   const websites = Array.isArray(merged.websites) ? merged.websites : []
   const summary = { heading: 'Resumen de estado', headers: ['#', 'Tema', 'Estado'], ...(merged.summary ?? {}) }
 
+  const ADR_STATUS_DEFAULT = [
+    { key: 'proposed', emoji: '🟡', label: 'Proposed', plural: 'Proposed' },
+    { key: 'accepted', emoji: '✅', label: 'Accepted', plural: 'Accepted' },
+    { key: 'rejected', emoji: '❌', label: 'Rejected', plural: 'Rejected' },
+    { key: 'deprecated', emoji: '⚠️', label: 'Deprecated', plural: 'Deprecated' },
+    { key: 'superseded', emoji: '🔁', label: 'Superseded', plural: 'Superseded' },
+  ]
+  const adrStatus = Array.isArray(merged.adr?.status) ? merged.adr.status : ADR_STATUS_DEFAULT
+  const adrPaths = Array.isArray(merged.adr?.paths) ? merged.adr.paths : ['docs/adr', 'adr', 'decisions']
+
   return {
     ...merged,
     projectsRoot,
@@ -60,6 +70,7 @@ export function loadConfig() {
     apps,
     websites,
     summary,
+    adr: { paths: adrPaths, status: adrStatus },
     pkgRoot: PKG_ROOT,
   }
 }

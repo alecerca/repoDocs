@@ -118,6 +118,14 @@ export function TopBar() {
           >
             {t('view.canvas')}
           </button>
+          <button
+            type="button"
+            className={view === 'decisions' ? 'on' : ''}
+            onClick={() => setView('decisions')}
+            title={t('view.decisions.title')}
+          >
+            {t('view.decisions')}
+          </button>
         </div>
 
         <div className="font-ctrl" title={t('font.title')}>

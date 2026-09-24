@@ -26,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   via `websites[]`), switchable in the same overlay with an App | Web toggle.
 - Demo docs and demo config are now **in English**; the summary table headers are config-driven
   (`summary.headers`) so exported tables match the document language.
+- **ADR Premium — phases 1–3**: a `🧭 Decisions` view (toggle with `D` / topbar) that parses
+  architecture decision records into the board. Each project can point `adr.paths` at its decisions
+  folder (defaults `docs/adr`, `adr`, `decisions`) and optionally configure `adr.status` labels.
+  - **Parser**: reads front-matter (id, title, status, date, deciders, `supersedes`/`superseded_by`/
+    `related_to`/`depends_on`) with a plain-text heuristic fallback; ids are canonicalized so
+    `0007 → 7`; section ranges (`Context`/`Decision`/`Consequences`) keep the byte-exact write-back
+    story from the docs flow, and a `pb:adredits` layer persists edits locally with
+    `POST /__mdboard/write` when the server allows it.
+  - **Relations**: cross-referenced ADRs get badges; superseded/adopted decisions surface an inline
+    alert on the card; broken references are reported by `npm run adr:lint` (`--lint`, non-zero exit).
+  - **Graph**: layered SVG graph with drag-to-reposition (persisted per project in
+    `pb:adrGraph:<project>`), background pan, wheel zoom and fit-to-view, with supersession edges
+    highlighted.
+  - **Demo**: 6 interrelated example ADRs (0001–0006) under `examples/docsboard-demo/docs/adr/`;
+    tests in `test/adr.test.mjs` cover parsing, canonical ids, the heuristic and relation resolution.
 
 ## [0.1.0] - 2026-09-23
 

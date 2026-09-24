@@ -70,7 +70,7 @@ export function Markdown({ md }: { md: string }) {
   )
 }
 
-function EditorBox({
+export function EditorBox({
   value,
   onChange,
   onSave,

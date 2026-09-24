@@ -99,5 +99,8 @@
         "points": ["Figma-like canvas", "Write-back to .md", "Config-driven · EN/ES"]
       }
     }
-  ]
+  ],
+  "adr": {
+    "paths": ["docs/adr"]
+  }
 }

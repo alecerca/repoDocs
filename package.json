@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "sync": "node scripts/sync-docs.mjs",
-    "predev": "node scripts/sync-docs.mjs",
-    "prebuild": "node scripts/sync-docs.mjs",
+    "sync": "node scripts/sync-docs.mjs && node scripts/sync-adr.mjs",
+    "predev": "node scripts/sync-docs.mjs && node scripts/sync-adr.mjs",
+    "prebuild": "node scripts/sync-docs.mjs && node scripts/sync-adr.mjs",
+    "adr:lint": "node scripts/sync-adr.mjs --lint",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
@@ -14,6 +15,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "gray-matter": "^4.0.3",
     "highlight.js": "^11.12.0",
     "marked": "^18.0.13",
     "react": "^19.2.8",

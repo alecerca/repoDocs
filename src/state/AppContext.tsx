@@ -15,8 +15,10 @@ import {
 import { toast } from '../lib/toast'
 import { translate, type Lang, type T } from '../lib/i18n'
 import type { DocStatus } from '../generated/docs'
+import { assembleAdr, ADR_INTRO_MARK } from '../lib/adrs'
+import type { AdrRecord } from '../generated/adr'
 
-export type ViewMode = 'board' | 'canvas'
+export type ViewMode = 'board' | 'canvas' | 'decisions'
 export type StatusFilter = 'all' | DocStatus
 
 export type { Lang }
@@ -36,6 +38,7 @@ type PersistState = {
 const UI_KEY = 'pb:ui'
 const EDITS_KEY = 'pb:edits'
 const CANVAS_KEY = 'pb:canvas'
+const ADR_EDITS_KEY = 'pb:adredits'
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -102,6 +105,12 @@ type Ctx = {
   setEdits: (updater: (prev: EditsMap) => EditsMap) => void
   /** Guarda la sección en localStorage y, si el server lo permite, también en el .md real. */
   writeSection: (baseKey: string, key: string, raw: string) => void
+  /** Ediciones de secciones de ADR (persisten en pb:adredits). */
+  adrEdits: EditsMap
+  hasAdrEdits: boolean
+  setAdrEdits: (updater: (prev: EditsMap) => EditsMap) => void
+  /** Guarda una sección de un ADR y hace write-back del archivo completo. */
+  writeAdrSection: (rec: AdrRecord, key: string, raw: string) => void
   /** Exporta el doc con las ediciones actuales y lo escribe en el .md real. */
   saveCurrentToFile: () => void
   resetEdits: () => void
@@ -128,6 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { ...DEFAULT_UI, ...persisted }
   })
   const [edits, setEditsState] = useState<EditsMap>(() => load(EDITS_KEY, {}))
+  const [adrEdits, setAdrEditsState] = useState<EditsMap>(() => load(ADR_EDITS_KEY, {}))
   const [canvas, setCanvasState] = useState<CanvasMap>(() => load(CANVAS_KEY, {}))
   const [selected, setSelected] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -161,6 +171,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const setAdrEdits = useCallback((updater: (prev: EditsMap) => EditsMap) => {
+    setAdrEditsState((prev) => {
+      const next = updater(prev)
+      save(ADR_EDITS_KEY, next)
+      return next
+    })
+  }, [])
+
   const writeDoc = useCallback(
     async (seed: EditsMap | null) => {
       if (!current) return false
@@ -190,6 +208,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
     },
     [edits, setEdits, writeDoc, t]
+  )
+
+  const writeAdrSection = useCallback(
+    (rec: AdrRecord, key: string, raw: string) => {
+      const baseKey = docKey(rec.project, rec.file)
+      const sectionKeyId = key === ADR_INTRO_MARK ? ADR_INTRO_MARK : sectionKey(baseKey, key)
+      const next = { ...adrEdits, [sectionKeyId]: raw }
+      setAdrEdits((prev) => ({ ...prev, [sectionKeyId]: raw }))
+      const md = assembleAdr(rec, next, baseKey)
+      void fetch('/__mdboard/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project: rec.project, file: rec.file, content: md }),
+      })
+        .then((res) => toast(res.ok ? t('toast.sectionSaved') : t('toast.sectionSavedLocal')))
+        .catch(() => toast(t('toast.sectionSavedLocal')))
+    },
+    [adrEdits, setAdrEdits, t]
   )
 
   const saveCurrentToFile = useCallback(() => {
@@ -250,6 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const hasEdits = Object.keys(edits).length > 0
+  const hasAdrEdits = Object.keys(adrEdits).length > 0
 
   const statusCounts = useMemo(
     () =>
@@ -292,6 +329,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     hasEdits,
     setEdits,
     writeSection,
+    adrEdits,
+    hasAdrEdits,
+    setAdrEdits,
+    writeAdrSection,
     saveCurrentToFile,
     resetEdits,
     canvas,
