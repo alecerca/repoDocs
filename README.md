@@ -88,50 +88,49 @@ shown on the chips (e.g. *Shipped* instead of *Done*).
 | --------------- | --------------- |
 | ![ADR Decisions board](assets/adr-premium.png) | ![ADR relations graph](assets/adr-graph.png) |
 
-**Qué es.** Architectural Decision Records (ADRs) son fichas que documentan cada decisión de
-arquitectura de un proyecto — y el contexto y las consecuencias detrás de ella. repoDocs los lee de
-tu carpeta `docs/adr/` (o las que configures en `mdboard.json` → `adr.paths`) y los convierte en un
-tablero de decisiones **conectadas**: quién reemplaza a quién, qué depende de qué, y cuál es la
-decisión vigente al final de cada cadena.
+**What it is.** Architecture Decision Records (ADRs) are lightweight documents that record each
+architecture decision of a project — along with the context and consequences behind it. repoDocs
+reads them from your `docs/adr/` folder (or any folders in `mdboard.json` → `adr.paths`) and turns
+them into a board of **connected** decisions: what supersedes what, what depends on what, and which
+decision is currently active at the end of each chain.
 
-**La idea.** En cada repo los ADR viven como `.md` planos y desconectados: resolver "¿esto ya se
-decidió?" es abrir archivos a mano y leer. repoDocs los parsea (front-matter en **YAML** `---`,
-**JSON** `;;;` o **TOML** `+++`, con heurísticas para markdown "sucio"), resuelve las relaciones
-(`supersedes`, `superseded_by`, `related_to`, `depends_on`), detecta cadenas de supersession y te da
-dos vistas:
+**The idea.** Inside a repo, ADRs live as flat, disconnected `.md` files: answering "was this
+already decided?" means opening files by hand and reading. repoDocs parses them (front-matter in
+**YAML** `---`, **JSON** `;;;` or **TOML** `+++`, plus heuristics for messy markdown), resolves the
+relations (`supersedes`, `superseded_by`, `related_to`, `depends_on`), detects supersession chains
+and gives you two views:
 
-- **List** — cards con status, badges de relación y alertas de supersession en contexto.
-- **Graph** — canvas SVG a ancho completo con las flechas dirigidas (drag, pan/zoom, foco por nodo)
-  y **export a Mermaid** (`.mmd`) para pegarlo en un README o un PR.
+- **List** — cards with status, relation badges and in-context supersession alerts.
+- **Graph** — a full-width SVG canvas with the directed edges (drag, pan/zoom, per-node focus) plus
+  **export to Mermaid** (`.mmd`) for pasting into a README or a PR.
 
-**Cómo verlo en la demo.** `npm run dev` levanta la app con **6 ADRs de ejemplo** en `examples/`
-con relaciones reales: abrí **🧭 Decisions** (toggle del topbar o atajo `D`) y jugá con **☑ List /
-🕸 Graph** y el export `.mmd`.
+**See it in the demo.** `npm run dev` ships the app with **6 sample ADRs** in `examples/` wired up
+with real relations: open **🧭 Decisions** (topbar toggle or `D`) and play with **☑ List / 🕸 Graph**
+and the `.mmd` export.
 
-**Cómo se usa con ADRs reales.** Poné tus ADRs (convención `NNNN-titulo.md`, formato `adr-tools` /
-MADR) en `docs/adr/` de tu proyecto → `npm run sync` → la vista Decisions aparece con todo; `npm run
-adr:lint` te avisa en CI de relaciones rotas. Editar, write-back y exportar funcionan igual que el
-resto de los docs.
+**Use it with real ADRs.** Drop your ADRs (convention `NNNN-title.md`, `adr-tools` / MADR format)
+into a project's `docs/adr/` → `npm run sync` → the Decisions view lights up; `npm run adr:lint`
+flags broken relations in CI. Editing, write-back and export behave exactly like the rest of the docs.
 
-**Cómo pagarlo.** Una licencia **lifetime** desbloquea el grafo, el export y el límite de ADRs
-(gratis llega a **10 ADRs por proyecto**, el resto queda con candado 🔒):
+**How to buy it.** A **lifetime** license unlocks the graph, the export and the ADR limit (free tops
+out at **10 ADRs per project**, the rest stays behind a 🔒):
 
-| Tier | Precio | Qué desbloquea |
-| ---- | ------ | -------------- |
-| 🏢 **Studio** (GitHub Sponsors) | **$20/mes** | licencia automática de ADR Premium al sponsor-view |
+| Tier | Price | Unlocks |
+| ---- | ----- | ------- |
+| 🏢 **Studio** (GitHub Sponsors) | **$20/mo** | automatic ADR Premium license the moment you sponsor |
 
-El webhook está **en vivo** en `server/` (deploy gratis en Vercel): hoy emite por **GitHub
-Sponsors** (`$20/mo`, firma `X-Hub-Signature-256`), y soporta también **Gumroad** /
-**Lemon Squeezy** si preferís otro canal — config: `server/README.md`.
+The issuing webhook is **live** in `server/` (free Vercel deploy): today it mints licenses from
+**GitHub Sponsors** (`$20/mo`, `X-Hub-Signature-256` verification) and also supports **Gumroad** /
+**Lemon Squeezy** if you prefer another channel — see `server/README.md`.
 
-**Qué pasa al pagar.**
-1. El webhook (`api/webhook.mjs`) valida la firma HMAC del evento de Sponsors, confirma que el tier
-   es el de $20 y firma un **token Ed25519** con tu clave privada (`{product, seats, issued, email}`).
-2. El token te llega por mail (opcional) y también se devuelve en la respuesta del webhook.
-3. Lo pegás en la app: botón **🔑** en la vista Decisions (o `mdboard.local.json` → `license`).
-4. Se valida **offline** contra la clave pública embebida (`src/lib/license.ts`): sin internet, sin
-   telemetría, sin llamadas a tu servidor. Con la licencia activa: grafo completo, export y ADRs sin
-   límite.
+**What happens after you pay.**
+1. The webhook (`api/webhook.mjs`) verifies the Sponsors event HMAC signature, confirms the tier is
+   $20 and signs an **Ed25519 token** with your private key (`{product, seats, issued, email}`).
+2. The token is emailed to you (optional) and returned in the webhook response.
+3. Paste it in the app: the **🔑** button in the Decisions view (or `mdboard.local.json` →
+   `license`).
+4. It validates **offline** against the embedded public key (`src/lib/license.ts`): no internet, no
+   telemetry, no calls to your server. Once active: full graph, export and unlimited ADRs.
 
 ## Scripts
 
