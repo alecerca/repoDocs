@@ -3,10 +3,9 @@ import { useApp } from '../state/AppContext'
 import type { CanvasLayout } from '../lib/registry'
 import { newSectionDefaults } from './canvasLayout'
 import { IntroCard, SummaryCard, SectionCard, EmptyState, Markdown, cleanHeading } from './Cards'
-import { DecisionCard } from './adr/DecisionCard'
 import { DecisionGraph } from './adr/DecisionGraph'
-import { MermaidExport } from './adr/MermaidExport'
 import { ADRS_ALL, adrsByProject, supersededByMap } from '../lib/adrs'
+import { LicenseProvider, LicenseGate, LicensePanel, AdrGroup } from './adr/LicenseGate'
 import { toast } from '../lib/toast'
 
 // ---------- BOARD ----------
@@ -293,47 +292,42 @@ export function DecisionsView() {
   const graphAdrs = groups.find(([p]) => p === graphProj)?.[1] ?? []
 
   return (
-    <div className="board adr-board">
-      <div className="board-toolbar">
-        <span className="board-hint">{t('adr.hint')}</span>
-        <div>
-          <button type="button" className={`btn ghost xs${sub === 'list' ? ' on' : ''}`} onClick={() => setSub('list')}>
-            {t('adr.list')}
-          </button>
-          <button type="button" className={`btn ghost xs${sub === 'graph' ? ' on' : ''}`} onClick={() => setSub('graph')}>
-            {t('adr.graph')}
-          </button>
-        </div>
-      </div>
-
-      {sub === 'graph' && (
-        <div className="adr-projects">
-          {withAdrs.map((p) => (
-            <button key={p} type="button" className={`fchip${graphProj === p ? ' on' : ''}`} onClick={() => setGraphSel(p)}>
-              {p}
+    <LicenseProvider>
+      <div className="board adr-board">
+        <div className="board-toolbar">
+          <span className="board-hint">{t('adr.hint')}</span>
+          <div>
+            <button type="button" className={`btn ghost xs${sub === 'list' ? ' on' : ''}`} onClick={() => setSub('list')}>
+              {t('adr.list')}
             </button>
-          ))}
+            <button type="button" className={`btn ghost xs${sub === 'graph' ? ' on' : ''}`} onClick={() => setSub('graph')}>
+              {t('adr.graph')}
+            </button>
+            <LicensePanel />
+          </div>
         </div>
-      )}
 
-      {sub === 'list'
-        ? groups.map(([project, adrs]) => (
-            <section key={project} className="adr-group">
-              <h2 className="adr-group-title">
-                <span className="adr-project-dot">{project.slice(0, 1)}</span>
-                {project}
-                <span className="lno">{adrs.length}</span>
-                <span className="adr-group-actions">
-                  <MermaidExport records={adrs} />
-                </span>
-              </h2>
-              {adrs.map((rec) => (
-                <DecisionCard key={rec.id} rec={rec} supersededBy={supMap[rec.id]} />
-              ))}
-            </section>
-          ))
-        : graphAdrs.length > 0 && <DecisionGraph adrs={graphAdrs} project={graphProj} />}
-    </div>
+        {sub === 'graph' && (
+          <div className="adr-projects">
+            {withAdrs.map((p) => (
+              <button key={p} type="button" className={`fchip${graphProj === p ? ' on' : ''}`} onClick={() => setGraphSel(p)}>
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {sub === 'list'
+          ? groups.map(([project, adrs]) => (
+              <AdrGroup key={project} project={project} adrs={adrs} supMap={supMap} />
+            ))
+          : (
+              <LicenseGate fallback={graphAdrs.length > 0 ? <AdrGroup project={graphProj} adrs={graphAdrs} supMap={supMap} /> : <EmptyState>{t('adr.empty')}</EmptyState>}>
+                {graphAdrs.length > 0 && <DecisionGraph adrs={graphAdrs} project={graphProj} />}
+              </LicenseGate>
+            )}
+      </div>
+    </LicenseProvider>
   )
 }
 

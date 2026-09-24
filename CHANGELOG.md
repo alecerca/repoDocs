@@ -46,6 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     list group headers and the graph toolbar (clipboard with `execCommand` fallback); the demo ships a
     generated `docsboard-demo.adr.mmd`. `adrGraph.ts` keeps pure graph/layout/export helpers
     (no runtime imports) so Node tests import it directly (`test/adr-mermaid.test.mjs`).
+  - **ADR Premium — phase 4 (asymmetric license)**: ADRs are free up to 10 per project; beyond that
+    (and the dependency graph) they require a signed Premium license.
+    - `scripts/license-tool.mjs` (generate / issue / verify) is the mirror of the future payment
+      webhook: it signs a JSON payload (`product`, `seats`, `issued`) with the **private** Ed25519 key
+      that never lives in the repo.
+    - `src/lib/license.ts` embeds the **public** key (`ADR_PUBLIC_KEY_HEX`), decodes
+      `base64url(payload) . base64url(sig)` tokens and verifies them offline with `@noble/ed25519` —
+      no network, no symmetric fallback (spec §6.4).
+    - `LicenseGate` / `LicensePanel` in `src/components/adr/LicenseGate.tsx`: the 🔑 button in the
+      Decisions toolbar opens an activation panel; tokens persist in `pb:license` and are re-verified
+      on load. The graph view falls back to the free limited list when unlicensed.
+    - Tests in `test/adr-license.test.mjs` cover token decoding, a valid fixture token signed with the
+      real key, tampering, wrong-issuer signatures and the tool round-trip with ephemeral keys.
 
 ## [0.1.0] - 2026-09-23
 

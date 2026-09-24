@@ -174,6 +174,34 @@ const DICT: Record<string, { en: string; es: string }> = {
     es: 'Mermaid copiado al portapapeles — pegálo en un README o mermaid.live',
   },
   'toast.mmdDownloaded': { en: '.mmd downloaded', es: '.mmd descargado' },
+
+  // ADR Premium license
+  'adr.license.btn.title': {
+    en: 'Activate ADR Premium license',
+    es: 'Activar licencia ADR Premium',
+  },
+  'adr.license.title': { en: 'ADR Premium license', es: 'Licencia ADR Premium' },
+  'adr.license.placeholder': {
+    en: 'Paste your license token…',
+    es: 'Pegá tu token de licencia…',
+  },
+  'adr.license.activate': { en: 'Activate', es: 'Activar' },
+  'adr.license.verify': { en: 'Verifying…', es: 'Verificando…' },
+  'adr.license.remove': { en: 'Remove', es: 'Quitar' },
+  'adr.license.active': { en: 'License active', es: 'Licencia activa' },
+  'adr.license.seats': { en: 'seats', es: 'asientos' },
+  'adr.license.invalid': { en: 'Invalid or revoked token.', es: 'Token inválido o revocado.' },
+  'adr.locked.n': {
+    en: '+{n} ADRs locked — requires Premium',
+    es: '+{n} ADRs bloqueados — requiere Premium',
+  },
+  'adr.locked.hint': {
+    en: 'Activate your license to unlock all ADRs and the dependency graph.',
+    es: 'Activá tu licencia para desbloquear todos los ADRs y el grafo de dependencias.',
+  },
+  'toast.licenseOn': { en: 'ADR Premium activated 🔓', es: 'ADR Premium activado 🔓' },
+  'toast.licenseOff': { en: 'License removed', es: 'Licencia quitada' },
+  'toast.licenseFail': { en: 'That license is not valid', es: 'Esa licencia no es válida' },
 }
 
 export function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {
