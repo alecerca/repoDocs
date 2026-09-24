@@ -2,6 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(HERE, '..')
@@ -10,7 +12,7 @@ const EXAMPLES = join(REPO, 'examples')
 // Configura la raíz de proyectos ANTES de importar sync-adr (cfg se resuelve al importar).
 process.env.MDBOARD_ROOT = EXAMPLES
 
-const { normAdrRef, parseAdrFile, detectStatusHeuristic, collectAdrs, writeAdrs } = await import('../scripts/sync-adr.mjs')
+const { normAdrRef, parseAdrFile, detectStatusHeuristic, collectAdrs, writeAdrs, parseAdrFrontmatter } = await import('../scripts/sync-adr.mjs')
 const { loadConfig } = await import('../scripts/config.mjs')
 const ADR_STATUS = loadConfig().adr.status
 
@@ -64,4 +66,60 @@ test('writeAdrs regenera el módulo sin errores', () => {
   const adrs = collectAdrs()
   writeAdrs(adrs)
   assert.ok(adrs.length > 0)
+})
+
+test('parseAdrFrontmatter soporta YAML · TOML (+++) · JSON (;;;)', () => {
+  assert.equal(parseAdrFrontmatter('---\nstatus: proposed\n---\n# x').status, 'proposed')
+  const tomlData = parseAdrFrontmatter('+++\nstatus = "accepted"\ndate = 2024-02-02\nsupersedes = ["0003"]\ndeciders = ["sanchiro", "ana"]\n+++\n# x')
+  assert.equal(tomlData.status, 'accepted')
+  assert.deepEqual(tomlData.supersedes, ['0003'])
+  assert.deepEqual(tomlData.deciders, ['sanchiro', 'ana'])
+  const jsonData = parseAdrFrontmatter(';;;\n{"status": "rejected", "date": "2024-03-05"}\n;;;\n# x')
+  assert.equal(jsonData.status, 'rejected')
+  assert.equal(jsonData.date, '2024-03-05')
+  assert.deepEqual(parseAdrFrontmatter('no hay front-matter acá'), {})
+  assert.deepEqual(parseAdrFrontmatter('+++\nesto-no-es-toml = =\n+++\n# x'), {})
+})
+
+function withTmpAdr(files, fn) {
+  const dir = mkdtempSync(join(tmpdir(), 'adr-fm-'))
+  try {
+    for (const [name, content] of Object.entries(files)) writeFileSync(join(dir, name), content, 'utf8')
+    fn(dir)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+}
+
+test('parseAdrFile lee front-matter TOML (status, date, relaciones)', () => {
+  withTmpAdr(
+    {
+      '0012-toml.md':
+        '+++\nstatus = "accepted"\ndate = 2024-02-02\ndeciders = ["sanchiro"]\nsupersedes = ["0007"]\n+++\n# Usar TOML\n\n## Context\n\nCtx\n\n## Decision\n\nDec\n',
+    },
+    (dir) => {
+      const rec = parseAdrFile(join(dir, '0012-toml.md'), 'tmp-proj', ADR_STATUS)
+      assert.equal(rec.id, '0012')
+      assert.equal(rec.status, 'accepted')
+      assert.equal(rec.date, '2024-02-02')
+      assert.deepEqual(rec.deciders, ['sanchiro'])
+      assert.deepEqual(rec.relations, [{ type: 'supersedes', targetId: '7' }])
+      assert.ok(rec.sections.some((s) => s.heading === 'Context'))
+    }
+  )
+})
+
+test('parseAdrFile lee front-matter JSON (status, date string, relaciones)', () => {
+  withTmpAdr(
+    {
+      '0013-json.md':
+        ';;;\n{"status": "accepted", "date": "2024-03-05", "related_to": ["0002"]}\n;;;\n# Usar JSON\n\n## Context\n\nCtx\n',
+    },
+    (dir) => {
+      const rec = parseAdrFile(join(dir, '0013-json.md'), 'tmp-proj', ADR_STATUS)
+      assert.equal(rec.status, 'accepted')
+      assert.equal(rec.date, '2024-03-05')
+      assert.deepEqual(rec.relations, [{ type: 'related_to', targetId: '2' }])
+    }
+  )
 })

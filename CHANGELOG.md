@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ADR front-matter `toml/json`**: `scripts/sync-adr.mjs` now parses front-matter in **YAML** (`---`),
+  **JSON** (`;;;`) and **TOML** (`+++`) with gray-matter engines (`toml` added). Covers multis in
+  `examples`, copy-in your own ADRs written with any of the three formats (`status`, `date`,
+  `deciders`, relations). Tests added in `test/adr.test.mjs` (49/49 total).
 - **Keyboard shortcuts**: `Ctrl/⌘+K` focuses search, `B` / `C` switch board ↔ canvas, `E` edits the
   focused section (esc is always available to abort).
 - **Formatting toolbar** in the inline editor (bold, italic, strikethrough, inline code, link, lists,

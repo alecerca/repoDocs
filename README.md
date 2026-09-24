@@ -82,16 +82,34 @@ shown on the chips (e.g. *Shipped* instead of *Done*).
 - **Export / Copy** rebuilds the full Markdown with your changes applied, for manual pasting.
 - **↺ Reset** discards all local edits (never touches files).
 
+## ADR Premium (Decisions)
+
+Architecture Decision Records in any project's `docs/adr/` (or the folders in `mdboard.json` →
+`adr.paths`) become a **🧭 Decisions** tab (topbar toggle or `D`):
+
+- **Parser** (`scripts/sync-adr.mjs`) reads front-matter in **YAML** (`---`), **JSON** (`;;;`) or
+  **TOML** (`+++`), plus plain-text heuristics: canonical ids (`0007 → 7`), H2 sections with line
+  ranges, `status`/`date`/`deciders`, and relations (`supersedes`, `superseded_by`,
+  `related_to`, `depends_on`) — validated by `npm run adr:lint`.
+- **Card list** with status, relation badges and supersession alerts, and **export to Mermaid**
+  (`.mmd`) for READMEs/PRs.
+- **Relations graph** as a full-width SVG canvas (drag, pan/zoom, focus mode).
+- **License**: free = up to 10 ADRs per project; premium unlocks the graph and unlimited ADRs with
+  an **Ed25519**-signed token (offline validation, no telemetry). The issuing webhook
+  (Gumroad / Lemon Squeezy) lives in `server/` — see `server/README.md`.
+
 ## Scripts
 
 | Command            | Description                                                        |
 | ------------------ | ------------------------------------------------------------------ |
-| `npm run sync`     | Rescan `projectsRoot`, regenerate `src/generated/{docs,appconfig}.ts` |
+| `npm run sync`     | Rescan `projectsRoot`, regenerate `src/generated/{docs,appconfig}.ts` and `adr.ts` |
+| `npm run adr:lint` | Check ADR relations / missing Context sections (exit code ≠ 0 if broken) |
+| `npm run webhook:local` | Run the license issuing webhook on `:8787` |
 | `npm run dev`      | Vite dev server (runs sync first)                                  |
 | `npm run build`    | `tsc -b && vite build` (runs sync first)                           |
 | `npm run lint`     | oxlint                                                             |
 | `npm run smoke`    | E2E smoke test (spawns its own preview on :5199, writes disabled)  |
-| `npm test`         | Status-override & config unit tests (`test/status-overrides.test.mjs`) |
+| `npm test`         | Unit tests: ADR parser (YAML/JSON/TOML), license, webhook, Mermaid, config |
 
 ## How it works
 

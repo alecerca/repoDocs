@@ -17,6 +17,7 @@ import { readdirSync, readFileSync, writeFileSync, statSync, mkdirSync } from 'n
 import { join, basename, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import matter from 'gray-matter'
+import toml from 'toml'
 import { loadConfig } from './config.mjs'
 
 const cfg = loadConfig()
@@ -64,18 +65,32 @@ export function detectStatusHeuristic(text, statusList) {
 /** Divide un documento ADR en secciones H2, como en sync-docs.mjs. */
 const SECTION_HEADING = /^##\s+(.+)$/
 
+/**
+ * Extrae el front-matter del ADR, soportando los tres formatos:
+ *   --- YAML (default) · +++ TOML · ;;; JSON
+ * Deja `{}` si no hay front-matter válido (nunca lanza).
+ */
+export function parseAdrFrontmatter(raw) {
+  let opts
+  if (raw.startsWith('+++')) {
+    opts = { delimiters: '+++', language: 'toml', engines: { toml: { parse: (s) => toml.parse(s) } } }
+  } else if (raw.startsWith(';;;')) {
+    opts = { delimiters: ';;;', language: 'json' }
+  }
+  try {
+    const parsed = matter(raw, opts)
+    return parsed.data && typeof parsed.data === 'object' ? parsed.data : {}
+  } catch {
+    return {}
+  }
+}
+
 export function parseAdrFile(filePath, projectName, adrStatusList) {
   const raw = readFileSync(filePath, 'utf8')
   const lines = raw.split('\n')
   const file = basename(filePath)
 
-  let fm = {}
-  try {
-    const parsed = matter(raw)
-    fm = parsed.data && typeof parsed.data === 'object' ? parsed.data : {}
-  } catch {
-    fm = {}
-  }
+  const fm = parseAdrFrontmatter(raw)
 
   const idMatch = file.match(/^(\d{3,})[-_]/)
   const titleLine = lines.find((l) => /^#\s+/.test(l))
