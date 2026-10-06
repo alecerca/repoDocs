@@ -121,7 +121,7 @@ out at **10 ADRs per project**, the rest stays behind a 🔒):
 
 The issuing webhook is **live** in `server/` (free Vercel deploy): today it mints licenses from
 **GitHub Sponsors** (`$20/mo`, `X-Hub-Signature-256` verification) and also supports **Gumroad** /
-**Lemon Squeezy** if you prefer another channel — see `server/README.md`.
+**Lemon Squeezy** if you prefer another channel. Deployment and setup docs are kept private.
 
 **What happens after you pay.**
 1. The webhook (`api/webhook.mjs`) verifies the Sponsors event HMAC signature, confirms the tier is

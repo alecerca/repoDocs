@@ -18,6 +18,9 @@ mdboard.local.json
 # Secrets del webhook serverless
 server/.env
 
+# Docs internos del webhook (privados, no se publican)
+server/README.md
+
 # Archivos auto-generados por scripts/sync-docs.mjs
 src/generated/
 
